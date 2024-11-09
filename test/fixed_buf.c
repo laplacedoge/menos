@@ -1,6 +1,7 @@
+#include <string.h>
+
 #include "greatest.h"
 #include "menos.h"
-#include <string.h>
 #include "util/fixed_buf.h"
 
 TEST CreateWithZeroLength(void) {
@@ -209,7 +210,7 @@ TEST JoinBuffer(void) {
     PASS();
 }
 
-SUITE(FlexBuf) {
+SUITE(FixedBufSuite) {
     RUN_TEST(CreateWithZeroLength);
     RUN_TEST(CreateFromBuffer);
     RUN_TEST(CreateFromString);

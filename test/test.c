@@ -1,13 +1,15 @@
 #include "greatest.h"
 
-SUITE(FlexBuf);
+SUITE(FixedBufSuite);
+SUITE(FlexBufSuite);
 
 GREATEST_MAIN_DEFS();
 
 int main(int argc, char **argv) {
     GREATEST_MAIN_BEGIN();
 
-    RUN_SUITE(FlexBuf);
+    RUN_SUITE(FixedBufSuite);
+    RUN_SUITE(FlexBufSuite);
 
     GREATEST_MAIN_END();
 }
