@@ -12,6 +12,7 @@ TokTag_ToStr(
 ) {
     switch (tag) {
     case TokTag_Let: return "let";
+    case TokTag_Assign: return "=";
     case TokTag_Semicolon: return ";";
     case TokTag_Name: return "Name";
     case TokTag_NumLit: return "NumericLiteral";

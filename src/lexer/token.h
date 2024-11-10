@@ -12,6 +12,7 @@ typedef enum _TokTag {
     TokTag_Let,
 
     /* Symbols. */
+    TokTag_Assign,
     TokTag_Semicolon,
 
     TokTag_Name,
