@@ -29,6 +29,15 @@ FlexBuf_New(void) {
     return obj;
 }
 
+void
+FlexBuf_Clear(
+    FlexBuf * obj
+) {
+    if (obj->len != 0) {
+        obj->len = 0;
+    }
+}
+
 /**
  * @brief Appends a byte to the end of a FlexBuf.
  *

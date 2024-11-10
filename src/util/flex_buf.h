@@ -9,6 +9,11 @@ typedef struct _FlexBuf FlexBuf;
 FlexBuf *
 FlexBuf_New(void);
 
+void
+FlexBuf_Clear(
+    FlexBuf * obj
+);
+
 bool
 FlexBuf_PushByte(
     FlexBuf * obj,
