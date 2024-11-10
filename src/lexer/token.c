@@ -28,6 +28,15 @@ Token_Init(
     memset(tok, 0, sizeof(Token));
 }
 
+void
+Token_InitWithTag(
+    Token * tok,
+    TokTag tag
+) {
+    Token_Init(tok);
+    tok->tag = tag;
+}
+
 bool
 Token_PushAsStr(
     Token * tok,

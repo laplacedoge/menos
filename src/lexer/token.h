@@ -73,6 +73,12 @@ Token_Init(
     Token * tok
 );
 
+void
+Token_InitWithTag(
+    Token * tok,
+    TokTag tag
+);
+
 bool
 Token_PushAsStr(
     Token * tok,
