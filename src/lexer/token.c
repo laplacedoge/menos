@@ -65,6 +65,33 @@ Token_PushAsStr(
     return FlexBuf_PushFmt(buf, "<Keyword '%s'>", str);
 }
 
+static
+void
+Token_Free(
+    Token * tok
+) {
+    switch (tok->tag) {
+    case TokTag_Let:
+    case TokTag_Assign:
+    case TokTag_Semicolon:
+        break;
+
+    case TokTag_Name:
+        FixedBuf_Free(tok->ext.name.str);
+        break;
+
+    case TokTag_NumLit:
+        break;
+
+    case TokTag_StrLit:
+        FixedBuf_Free(tok->ext.str_lit.str);
+        break;
+
+    case TokTag_Eof:
+        break;
+    }
+}
+
 typedef struct _TokSeq {
     FlexBuf * buf;
     usize num;
@@ -212,10 +239,24 @@ Exit:
     return res;
 }
 
+static
+void
+TokSeq_FreeTokens(
+    TokSeq * seq
+) {
+    Token * buf_toks = (Token *)FlexBuf_Data(seq->buf);
+    usize num_toks = seq->num;
+
+    for (usize i = 0; i < num_toks - 1; i++) {
+        Token_Free(buf_toks + i);
+    }
+}
+
 void
 TokSeq_Free(
     TokSeq * seq
 ) {
+    TokSeq_FreeTokens(seq);
     FlexBuf_Free(seq->buf);
     MeMem_Free(seq);
 }
