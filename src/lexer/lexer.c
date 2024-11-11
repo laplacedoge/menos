@@ -10,6 +10,7 @@
 typedef enum _FsmStat {
     FsmStat_Idle,
     FsmStat_Name,
+    FsmStat_Num,
 } FsmStat;
 
 /* FSM result. */
@@ -23,6 +24,7 @@ typedef enum _FsmRes {
 typedef struct _Lexer {
     FsmStat stat;
     FlexBuf * str;
+    usize num;
     TokSeq * seq;
 } Lexer;
 
@@ -74,6 +76,7 @@ Lexer_New(void) {
 
     lex->stat = FsmStat_Idle;
     lex->str = str;
+    lex->num = 0;
     lex->seq = seq;
 
     return lex;
@@ -165,6 +168,19 @@ Exit:
 }
 
 static
+bool
+PushNumberToken(
+    TokSeq * seq,
+    usize num
+) {
+    Token tok;
+    Token_InitWithTag(&tok, TokTag_NumLit);
+    tok.ext.num_lit.val = num;
+
+    return TokSeq_Push(seq, &tok);
+}
+
+static
 inline
 FsmRes
 Lexer_FeedByte_Idle(
@@ -177,6 +193,15 @@ Lexer_FeedByte_Idle(
         byte == '\t' ||
         byte == '\r' ||
         byte == '\n') {
+
+        return FsmRes_Ok;
+    }
+
+    /* If this is the first character of a number. */
+    if (byte >= '0' && byte <= '9') {
+        lex->num = byte - '0';
+
+        lex->stat = FsmStat_Num;
 
         return FsmRes_Ok;
     }
@@ -252,6 +277,32 @@ Lexer_FeedByte_Name(
 }
 
 static
+inline
+FsmRes
+Lexer_FeedByte_Num(
+    Lexer * lex,
+    u8 byte
+) {
+
+    /* If this is the remaining character of a number. */
+    if (byte >= '0' && byte <= '9') {
+        lex->num *= 10;
+        lex->num += byte - '0';
+
+        return FsmRes_Ok;
+    }
+
+    /* This number is finished, push it to the token sequence. */
+    if (PushNumberToken(lex->seq, lex->num) == false) {
+        return FsmRes_NoMemory;
+    }
+
+    lex->stat = FsmStat_Idle;
+
+    return FsmRes_Again;
+}
+
+static
 FsmRes
 Lexer_FeedByte(
     Lexer * lex,
@@ -266,6 +317,10 @@ Lexer_FeedByte(
 
     case FsmStat_Name:
         res = Lexer_FeedByte_Name(lex, byte);
+        break;
+
+    case FsmStat_Num:
+        res = Lexer_FeedByte_Num(lex, byte);
         break;
     }
 
@@ -290,6 +345,23 @@ Lexer_FeedEol_Name(
 }
 
 static
+inline
+FsmRes
+Lexer_FeedEol_Num(
+    Lexer * lex
+) {
+
+    /* This number is finished, push it to the token sequence. */
+    if (PushNumberToken(lex->seq, lex->num) == false) {
+        return FsmRes_NoMemory;
+    }
+
+    lex->stat = FsmStat_Idle;
+
+    return FsmRes_Ok;
+}
+
+static
 FsmRes
 Lexer_FeedEol(
     Lexer * lex
@@ -303,6 +375,10 @@ Lexer_FeedEol(
 
     case FsmStat_Name:
         res = Lexer_FeedEol_Name(lex);
+        break;
+
+    case FsmStat_Num:
+        res = Lexer_FeedEol_Num(lex);
         break;
     }
 

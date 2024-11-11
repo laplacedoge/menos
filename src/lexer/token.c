@@ -51,7 +51,7 @@ Token_PushAsStr(
                 FixedBuf_Data(tok->ext.name.str));
 
         case TokTag_NumLit:
-            return FlexBuf_PushFmt(buf, "<%s \"%zu\">",
+            return FlexBuf_PushFmt(buf, "<%s %zu>",
                 TokTag_ToStr(tok->tag),
                 tok->ext.num_lit.val);
 
