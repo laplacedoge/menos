@@ -11,6 +11,7 @@ typedef enum _FsmStat {
     FsmStat_Idle,
     FsmStat_Name,
     FsmStat_Num,
+    FsmStat_StrLit,
 } FsmStat;
 
 /* FSM result. */
@@ -181,6 +182,34 @@ PushNumberToken(
 }
 
 static
+bool
+PushStringLiteralToken(
+    TokSeq * seq,
+    FlexBuf * str
+) {
+    FixedBuf * _str = FlexBuf_ToFixedBuf(str);
+    if (_str == NULL) {
+        goto Exit;
+    }
+
+    Token tok;
+    Token_InitWithTag(&tok, TokTag_StrLit);
+    tok.ext.str_lit.str = _str;
+
+    if (TokSeq_Push(seq, &tok) == false) {
+        goto FreeStr;
+    }
+
+    return true;
+
+FreeStr:
+    FixedBuf_Free(_str);
+
+Exit:
+    return false;
+}
+
+static
 inline
 FsmRes
 Lexer_FeedByte_Idle(
@@ -218,6 +247,17 @@ Lexer_FeedByte_Idle(
         }
 
         lex->stat = FsmStat_Name;
+
+        return FsmRes_Ok;
+    }
+
+    /* If this is the opening double quote of a string literal. */
+    if (byte == '"') {
+
+        /* Clear the string buffer. */
+        FlexBuf_Clear(lex->str);
+
+        lex->stat = FsmStat_StrLit;
 
         return FsmRes_Ok;
     }
@@ -303,6 +343,40 @@ Lexer_FeedByte_Num(
 }
 
 static
+inline
+FsmRes
+Lexer_FeedByte_StrLit(
+    Lexer * lex,
+    u8 byte
+) {
+
+    /* Line break characters are invalid. */
+    if (byte == '\r' ||
+        byte == '\n') {
+
+        return FsmRes_UnexpectedByte;
+    }
+
+    /* If this string literal is finished, push it to the token sequence. */
+    if (byte == '"') {
+        if (PushStringLiteralToken(lex->seq, lex->str) == false) {
+            return FsmRes_NoMemory;
+        }
+
+        lex->stat = FsmStat_Idle;
+
+        return FsmRes_Ok;
+    }
+
+    /* Push this character to the string buffer. */
+    if (FlexBuf_PushByte(lex->str, byte) == false) {
+        return FsmRes_NoMemory;
+    }
+
+    return FsmRes_Ok;
+}
+
+static
 FsmRes
 Lexer_FeedByte(
     Lexer * lex,
@@ -321,6 +395,10 @@ Lexer_FeedByte(
 
     case FsmStat_Num:
         res = Lexer_FeedByte_Num(lex, byte);
+        break;
+
+    case FsmStat_StrLit:
+        res = Lexer_FeedByte_StrLit(lex, byte);
         break;
     }
 
@@ -362,6 +440,23 @@ Lexer_FeedEol_Num(
 }
 
 static
+inline
+FsmRes
+Lexer_FeedEol_StrLit(
+    Lexer * lex
+) {
+
+    /* If this string literal is finished, push it to the token sequence. */
+    if (PushStringLiteralToken(lex->seq, lex->str) == false) {
+        return FsmRes_NoMemory;
+    }
+
+    lex->stat = FsmStat_Idle;
+
+    return FsmRes_Ok;
+}
+
+static
 FsmRes
 Lexer_FeedEol(
     Lexer * lex
@@ -379,6 +474,10 @@ Lexer_FeedEol(
 
     case FsmStat_Num:
         res = Lexer_FeedEol_Num(lex);
+        break;
+
+    case FsmStat_StrLit:
+        res = Lexer_FeedEol_StrLit(lex);
         break;
     }
 

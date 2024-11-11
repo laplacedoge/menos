@@ -55,11 +55,22 @@ Token_PushAsStr(
                 TokTag_ToStr(tok->tag),
                 tok->ext.num_lit.val);
 
-        case TokTag_StrLit:
-            return FlexBuf_PushFmt(buf, "<%s \"%.*s\">",
+        case TokTag_StrLit: {
+            FixedBuf * escaped_str =
+                FixedBuf_Escape(tok->ext.str_lit.str);
+            if (escaped_str == NULL) {
+                return false;
+            }
+
+            bool res = FlexBuf_PushFmt(buf, "<%s \"%.*s\">",
                 TokTag_ToStr(tok->tag),
-                FixedBuf_Size(tok->ext.str_lit.str),
-                FixedBuf_Data(tok->ext.str_lit.str));
+                FixedBuf_Size(escaped_str),
+                FixedBuf_Data(escaped_str));
+
+            FixedBuf_Free(escaped_str);
+
+            return res;
+        }
 
         default:
             break;
