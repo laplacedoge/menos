@@ -1,3 +1,5 @@
+#include <string.h>
+
 #include "lexer.h"
 #include "token.h"
 #include "memory/allocate.h"
@@ -23,6 +25,35 @@ typedef struct _Lexer {
     FlexBuf * str;
     TokSeq * seq;
 } Lexer;
+
+/* Keyword token entry. */
+typedef struct _KwTokEnt {
+    const char * str;
+    TokTag tag;
+} KwTokEnt;
+
+/* Keyword token map. */
+static
+KwTokEnt *
+kw_tok_map[] = {
+    (KwTokEnt[]) { { NULL, 0 } },
+    (KwTokEnt[]) { { NULL, 0 } },
+    (KwTokEnt[]) { { NULL, 0 } },
+    (KwTokEnt[]) {
+        { "let", TokTag_Let },
+        { NULL, 0 },
+    },
+};
+
+/* The number of keyword token entires. */
+static
+const usize
+num_kw_tok_ents = sizeof(kw_tok_map) / sizeof(kw_tok_map[0]);
+
+/* The maximum length of the keyword token. */
+static
+const usize
+max_kw_tok_len = num_kw_tok_ents - 1;
 
 Lexer *
 Lexer_New(void) {
@@ -70,29 +101,66 @@ PushNormalToken(
 
 static
 bool
+NameToKeyword(
+    const u8 * buf,
+    usize len,
+    TokTag * tag
+) {
+    if (len == 0 ||
+        len > max_kw_tok_len) {
+
+        return false;
+    }
+
+    KwTokEnt * ent = kw_tok_map[len];
+    while (ent->str != NULL) {
+        if (memcmp(buf, ent->str, len) == 0) {
+            *tag = ent->tag;
+            return true;
+        }
+
+        ent += 1;
+    }
+
+    return false;
+}
+
+static
+bool
 PushNameToken(
     TokSeq * seq,
     FlexBuf * name
 ) {
-    FixedBuf * str = FlexBuf_ToFixedBuf(name);
-    if (str == NULL) {
-        goto Exit;
-    }
+    u8 * name_buf = FlexBuf_Data(name);
+    usize name_len = FlexBuf_Size(name);
 
     Token tok;
-    Token_InitWithTag(&tok, TokTag_Name);
-    tok.ext.name.str = str;
+    Token_Init(&tok);
+
+    FixedBuf * str = NULL;
+
+    if (NameToKeyword(name_buf, name_len, &tok.tag) == false) {
+        tok.tag = TokTag_Name;
+
+        str = FlexBuf_ToFixedBuf(name);
+        if (str == NULL) {
+            goto Exit;
+        }
+
+        tok.ext.name.str = str;
+    }
 
     if (TokSeq_Push(seq, &tok) == false) {
-        goto FreeStr;
+        goto Exit;
     }
 
     return true;
 
-FreeStr:
-    FixedBuf_Free(str);
-
 Exit:
+    if (str != NULL) {
+        FixedBuf_Free(str);
+    }
+
     return false;
 }
 
