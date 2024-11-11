@@ -47,6 +47,11 @@ FixedBuf_Size(
     FixedBuf * buf
 );
 
+FixedBuf *
+FixedBuf_Escape(
+    FixedBuf * buf
+);
+
 void
 FixedBuf_Strip(
     FixedBuf * buf

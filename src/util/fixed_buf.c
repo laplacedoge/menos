@@ -7,6 +7,7 @@
 
 #include "fixed_buf.h"
 #include "memory/allocate.h"
+#include "flex_buf.h"
 #include "menos.h"
 
 typedef struct _FixedBuf {
@@ -171,6 +172,81 @@ FixedBuf_Size(
     FixedBuf * obj
 ) {
     return obj->len;
+}
+
+static
+FlexBuf *
+FixedBuf_ToEscapedFlexBuf(
+    FixedBuf * obj
+) {
+    FlexBuf * dst_obj = FlexBuf_New();
+    if (dst_obj == NULL) {
+        goto Exit;
+    }
+
+    bool res;
+
+    for (usize i = 0; i < obj->len; i++) {
+        u8 byte = obj->buf[i];
+
+        if (byte >= 0x20 &&
+            byte <= 0x7E) {
+
+            if (byte == '\\') {
+                res = FlexBuf_PushBuf(dst_obj, "\\\\", 2);
+            } else if (byte == '"') {
+                res = FlexBuf_PushBuf(dst_obj, "\\\"", 2);
+            } else {
+                res = FlexBuf_PushByte(dst_obj, byte);
+            }
+        } else {
+            if (byte == '\t') {
+                res = FlexBuf_PushBuf(dst_obj, "\\t", 2);
+            } else if (byte == '\n') {
+                res = FlexBuf_PushBuf(dst_obj, "\\n", 2);
+            } else if (byte == '\r') {
+                res = FlexBuf_PushBuf(dst_obj, "\\r", 2);
+            } else {
+                const char * CHAR_MAP = "0123456789ABCDEF";
+                u8 buf[4] = { '\\', 'x', '0', '0' };
+
+                buf[2] = CHAR_MAP[byte >> 4];
+                buf[3] = CHAR_MAP[byte & 0x0F];
+
+                res = FlexBuf_PushBuf(dst_obj, buf, sizeof(buf));
+            }
+        }
+
+        if (res == false) {
+            goto FreeDst;
+        }
+    }
+
+    return dst_obj;
+
+FreeDst:
+    FlexBuf_Free(dst_obj);
+
+Exit:
+    return NULL;
+}
+
+FixedBuf *
+FixedBuf_Escape(
+    FixedBuf * obj
+) {
+    FlexBuf * tmp_obj = FixedBuf_ToEscapedFlexBuf(obj);
+    if (tmp_obj == NULL) {
+        goto Exit;
+    }
+
+    FixedBuf * new_obj = FixedBuf_NewFromBuf(
+        FlexBuf_Data(tmp_obj), FlexBuf_Size(tmp_obj));
+
+    FlexBuf_Free(tmp_obj);
+
+Exit:
+    return new_obj;
 }
 
 void

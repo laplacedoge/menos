@@ -84,6 +84,28 @@ TEST CreateFromFormat(void) {
     PASS();
 }
 
+TEST EscapeString(void) {
+    const char * SRC_STR = "\"Hello\\ \x1B[34\t \r\n\"";
+    const usize SRC_LEN = strlen(SRC_STR);
+
+    const char * ESC_STR = "\\\"Hello\\\\ \\x1B[34\\t \\r\\n\\\"";
+    const usize ESC_LEN = strlen(ESC_STR);
+
+    FixedBuf * src_buf = FixedBuf_NewFromStr(SRC_STR);
+    ASSERT_NEQ(NULL, src_buf);
+
+    FixedBuf * esc_buf = FixedBuf_Escape(src_buf);
+    ASSERT_NEQ(NULL, esc_buf);
+    ASSERT_NEQ(NULL, FixedBuf_Data(esc_buf));
+    ASSERT_EQ_FMT(ESC_LEN, FixedBuf_Size(esc_buf), "%zu");
+    ASSERT_MEM_EQ(ESC_STR, FixedBuf_Data(esc_buf), ESC_LEN);
+
+    FixedBuf_Free(esc_buf);
+    FixedBuf_Free(src_buf);
+
+    PASS();
+}
+
 TEST StripLeftSide(void) {
     const char * SRC_STR = "  \t \r\r \n Hello";
     const char * DST_STR = "Hello";
@@ -216,6 +238,7 @@ SUITE(FixedBufSuite) {
     RUN_TEST(CreateFromString);
     RUN_TEST(CreateFromStringWithNull);
     RUN_TEST(CreateFromFormat);
+    RUN_TEST(EscapeString);
     RUN_TEST(StripLeftSide);
     RUN_TEST(StripRightSide);
     RUN_TEST(StripBothSide);
