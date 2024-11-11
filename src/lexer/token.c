@@ -257,7 +257,7 @@ TokSeq_FreeTokens(
     Token * buf_toks = (Token *)FlexBuf_Data(seq->buf);
     usize num_toks = seq->num;
 
-    for (usize i = 0; i < num_toks - 1; i++) {
+    for (usize i = 0; i < num_toks; i++) {
         Token_Free(buf_toks + i);
     }
 }
