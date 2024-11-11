@@ -2,6 +2,7 @@
 #define __ME_LEXER_LEXER_H__
 
 #include "menos.h"
+#include "lexer/token.h"
 
 typedef struct _Lexer Lexer;
 
@@ -17,7 +18,8 @@ Lexer_Feed(
 
 bool
 Lexer_Finalize(
-    Lexer * lex
+    Lexer * lex,
+    TokSeq ** seq
 );
 
 void

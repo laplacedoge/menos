@@ -336,7 +336,8 @@ Lexer_Feed(
 
 bool
 Lexer_Finalize(
-    Lexer * lex
+    Lexer * lex,
+    TokSeq ** seq
 ) {
     switch (Lexer_FeedEol(lex)) {
     case FsmRes_Ok:
@@ -347,6 +348,15 @@ Lexer_Finalize(
     case FsmRes_UnexpectedByte:
         return false;
     }
+
+    TokSeq * new_seq = TokSeq_New();
+    if (new_seq == NULL) {
+        return false;
+    }
+
+    TokSeq * res_seq = lex->seq;
+    lex->seq = new_seq;
+    *seq = res_seq;
 
     return true;
 }
