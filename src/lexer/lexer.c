@@ -12,6 +12,10 @@ typedef enum _FsmStat {
     FsmStat_Name,
     FsmStat_Num,
     FsmStat_StrLit,
+    FsmStat_AsgOrEqu,
+    FsmStat_Neq,
+    FsmStat_GtOrGte,
+    FsmStat_LtOrLte,
 } FsmStat;
 
 /* FSM result. */
@@ -262,12 +266,28 @@ Lexer_FeedByte_Idle(
         return FsmRes_Ok;
     }
 
+    /* Comparison operators. */
+    do {
+        if (byte == '=') {
+            lex->stat = FsmStat_AsgOrEqu;
+        } else if (byte == '!') {
+            lex->stat = FsmStat_Neq;
+        } else if (byte == '>') {
+            lex->stat = FsmStat_GtOrGte;
+        } else if (byte == '<') {
+            lex->stat = FsmStat_LtOrLte;
+        } else {
+            break;
+        }
+
+        return FsmRes_Ok;
+
+    } while (false);
+
     do {
         TokTag tag;
 
-        if (byte == '=') {
-            tag = TokTag_Assign;
-        } else if (byte == ';') {
+        if (byte == ';') {
             tag = TokTag_Semicolon;
         } else {
             break;
@@ -377,6 +397,108 @@ Lexer_FeedByte_StrLit(
 }
 
 static
+inline
+FsmRes
+Lexer_FeedByte_AsgOrEqu(
+    Lexer * lex,
+    u8 byte
+) {
+    TokTag tag;
+    FsmRes res;
+
+    if (byte == '=') {
+        tag = TokTag_Equ;
+        res = FsmRes_Ok;
+    } else {
+        tag = TokTag_Assign;
+        res = FsmRes_Again;
+    }
+
+    if (PushNormalToken(lex->seq, tag) == false) {
+        return FsmRes_NoMemory;
+    }
+
+    lex->stat = FsmStat_Idle;
+
+    return res;
+}
+
+static
+inline
+FsmRes
+Lexer_FeedByte_Neq(
+    Lexer * lex,
+    u8 byte
+) {
+    if (byte == '=') {
+        if (PushNormalToken(lex->seq, TokTag_Neq) == false) {
+            return FsmRes_NoMemory;
+        }
+
+        lex->stat = FsmStat_Idle;
+
+        return FsmRes_Ok;
+    }
+
+    return FsmRes_UnexpectedByte;
+}
+
+static
+inline
+FsmRes
+Lexer_FeedByte_GtOrGte(
+    Lexer * lex,
+    u8 byte
+) {
+    TokTag tag;
+    FsmRes res;
+
+    if (byte == '=') {
+        tag = TokTag_Gte;
+        res = FsmRes_Ok;
+    } else {
+        tag = TokTag_Gt;
+        res = FsmRes_Again;
+    }
+
+    if (PushNormalToken(lex->seq, tag) == false) {
+        return FsmRes_NoMemory;
+    }
+
+    lex->stat = FsmStat_Idle;
+
+    return res;
+}
+
+static
+inline
+FsmRes
+Lexer_FeedByte_LtOrLte(
+    Lexer * lex,
+    u8 byte
+) {
+    TokTag tag;
+    FsmRes res;
+
+    if (byte == '=') {
+        tag = TokTag_Lte;
+        res = FsmRes_Ok;
+    } else {
+        tag = TokTag_Lt;
+        res = FsmRes_Again;
+    }
+
+    if (PushNormalToken(lex->seq, tag) == false) {
+        return FsmRes_NoMemory;
+    }
+
+    lex->stat = FsmStat_Idle;
+
+    return res;
+}
+
+
+static
 FsmRes
 Lexer_FeedByte(
     Lexer * lex,
@@ -399,6 +521,22 @@ Lexer_FeedByte(
 
     case FsmStat_StrLit:
         res = Lexer_FeedByte_StrLit(lex, byte);
+        break;
+
+    case FsmStat_AsgOrEqu:
+        res = Lexer_FeedByte_AsgOrEqu(lex, byte);
+        break;
+
+    case FsmStat_Neq:
+        res = Lexer_FeedByte_Neq(lex, byte);
+        break;
+
+    case FsmStat_GtOrGte:
+        res = Lexer_FeedByte_GtOrGte(lex, byte);
+        break;
+
+    case FsmStat_LtOrLte:
+        res = Lexer_FeedByte_LtOrLte(lex, byte);
         break;
     }
 
@@ -457,6 +595,60 @@ Lexer_FeedEol_StrLit(
 }
 
 static
+inline
+FsmRes
+Lexer_FeedEol_AsgOrEqu(
+    Lexer * lex
+) {
+    if (PushNormalToken(lex->seq, TokTag_Assign) == false) {
+        return FsmRes_NoMemory;
+    }
+
+    lex->stat = FsmStat_Idle;
+
+    return FsmRes_Ok;
+}
+
+static
+inline
+FsmRes
+Lexer_FeedEol_Neq(
+    Lexer * lex
+) {
+    return FsmRes_UnexpectedByte;
+}
+
+static
+inline
+FsmRes
+Lexer_FeedEol_GtOrGte(
+    Lexer * lex
+) {
+    if (PushNormalToken(lex->seq, TokTag_Gt) == false) {
+        return FsmRes_NoMemory;
+    }
+
+    lex->stat = FsmStat_Idle;
+
+    return FsmRes_Ok;
+}
+
+static
+inline
+FsmRes
+Lexer_FeedEol_LtOrLte(
+    Lexer * lex
+) {
+    if (PushNormalToken(lex->seq, TokTag_Lt) == false) {
+        return FsmRes_NoMemory;
+    }
+
+    lex->stat = FsmStat_Idle;
+
+    return FsmRes_Ok;
+}
+
+static
 FsmRes
 Lexer_FeedEol(
     Lexer * lex
@@ -478,6 +670,22 @@ Lexer_FeedEol(
 
     case FsmStat_StrLit:
         res = Lexer_FeedEol_StrLit(lex);
+        break;
+
+    case FsmStat_AsgOrEqu:
+        res = Lexer_FeedEol_AsgOrEqu(lex);
+        break;
+
+    case FsmStat_Neq:
+        res = Lexer_FeedEol_Neq(lex);
+        break;
+
+    case FsmStat_GtOrGte:
+        res = Lexer_FeedEol_GtOrGte(lex);
+        break;
+
+    case FsmStat_LtOrLte:
+        res = Lexer_FeedEol_LtOrLte(lex);
         break;
     }
 

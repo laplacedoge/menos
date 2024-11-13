@@ -13,6 +13,12 @@ TokTag_ToStr(
     switch (tag) {
     case TokTag_Let: return "let";
     case TokTag_Assign: return "=";
+    case TokTag_Equ: return "==";
+    case TokTag_Neq: return "!=";
+    case TokTag_Gt: return ">";
+    case TokTag_Gte: return ">=";
+    case TokTag_Lt: return "<";
+    case TokTag_Lte: return "<=";
     case TokTag_Semicolon: return ";";
     case TokTag_Name: return "Name";
     case TokTag_NumLit: return "NumericLiteral";
@@ -94,6 +100,12 @@ Token_Free(
     switch (tok->tag) {
     case TokTag_Let:
     case TokTag_Assign:
+    case TokTag_Equ:
+    case TokTag_Neq:
+    case TokTag_Gt:
+    case TokTag_Gte:
+    case TokTag_Lt:
+    case TokTag_Lte:
     case TokTag_Semicolon:
         break;
 

@@ -13,6 +13,12 @@ typedef enum _TokTag {
 
     /* Symbols. */
     TokTag_Assign,
+    TokTag_Equ,
+    TokTag_Neq,
+    TokTag_Gt,
+    TokTag_Gte,
+    TokTag_Lt,
+    TokTag_Lte,
     TokTag_Semicolon,
 
     TokTag_Name,
