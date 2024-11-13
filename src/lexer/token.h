@@ -19,6 +19,10 @@ typedef enum _TokTag {
     TokTag_Gte,
     TokTag_LeftBrace,
     TokTag_Lte,
+    TokTag_LeftParen,
+    TokTag_RightParen,
+    TokTag_LeftBracket,
+    TokTag_RightBracket,
     TokTag_Semicolon,
 
     TokTag_Name,

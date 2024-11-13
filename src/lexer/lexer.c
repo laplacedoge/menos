@@ -286,10 +286,18 @@ Lexer_FeedByte_Idle(
 
     do {
         TokTag tag;
+        bool found = true;
 
-        if (byte == ';') {
-            tag = TokTag_Semicolon;
-        } else {
+        switch (byte) {
+        case '(': tag = TokTag_LeftParen; break;
+        case ')': tag = TokTag_RightParen; break;
+        case '[': tag = TokTag_LeftBracket; break;
+        case ']': tag = TokTag_RightBracket; break;
+        case ';': tag = TokTag_Semicolon; break;
+        default: found = false; break;
+        }
+
+        if (found == false) {
             break;
         }
 

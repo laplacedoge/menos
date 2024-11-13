@@ -19,6 +19,10 @@ TokTag_ToStr(
     case TokTag_Gte: return ">=";
     case TokTag_LeftBrace: return "<";
     case TokTag_Lte: return "<=";
+    case TokTag_LeftParen: return "(";
+    case TokTag_RightParen: return ")";
+    case TokTag_LeftBracket: return "[";
+    case TokTag_RightBracket: return "]";
     case TokTag_Semicolon: return ";";
     case TokTag_Name: return "Name";
     case TokTag_NumLit: return "NumericLiteral";
@@ -106,6 +110,10 @@ Token_Free(
     case TokTag_Gte:
     case TokTag_LeftBrace:
     case TokTag_Lte:
+    case TokTag_LeftParen:
+    case TokTag_RightParen:
+    case TokTag_LeftBracket:
+    case TokTag_RightBracket:
     case TokTag_Semicolon:
         break;
 
