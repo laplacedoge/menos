@@ -87,6 +87,63 @@ TEST NameTokens(void) {
     PASS();
 }
 
+TEST ComparisonOperatorTokens(void) {
+    const char * INPUT_STR = " == = != > < >= <= ";
+    const usize INPUT_LEN = strlen(INPUT_STR);
+    const usize NUM_TOKS = 7 + 1;
+
+    Lexer * lex = Lexer_New();
+    ASSERT_NEQ(NULL, lex);
+
+    TokSeq * seq;
+    ASSERT(Lexer_Feed(lex, INPUT_STR, INPUT_LEN));
+    ASSERT(Lexer_Finalize(lex, &seq));
+
+    ASSERT_NEQ(NULL, seq);
+    ASSERT_EQ_FMT(NUM_TOKS, TokSeq_Count(seq), "%zu");
+
+    Token * tok;
+
+    const char * TOK_STR;
+    usize tok_len;
+    usize tok_idx = 0;
+
+    ASSERT_NEQ(NULL, tok = TokSeq_At(seq, tok_idx));
+    ASSERT_TOK_TAG_EQ(TokTag_Equ, tok->tag);
+    tok_idx += 1;
+
+    ASSERT_NEQ(NULL, tok = TokSeq_At(seq, tok_idx));
+    ASSERT_TOK_TAG_EQ(TokTag_Assign, tok->tag);
+    tok_idx += 1;
+
+    ASSERT_NEQ(NULL, tok = TokSeq_At(seq, tok_idx));
+    ASSERT_TOK_TAG_EQ(TokTag_Neq, tok->tag);
+    tok_idx += 1;
+
+    ASSERT_NEQ(NULL, tok = TokSeq_At(seq, tok_idx));
+    ASSERT_TOK_TAG_EQ(TokTag_Gt, tok->tag);
+    tok_idx += 1;
+
+    ASSERT_NEQ(NULL, tok = TokSeq_At(seq, tok_idx));
+    ASSERT_TOK_TAG_EQ(TokTag_Lt, tok->tag);
+    tok_idx += 1;
+
+    ASSERT_NEQ(NULL, tok = TokSeq_At(seq, tok_idx));
+    ASSERT_TOK_TAG_EQ(TokTag_Gte, tok->tag);
+    tok_idx += 1;
+
+    ASSERT_NEQ(NULL, tok = TokSeq_At(seq, tok_idx));
+    ASSERT_TOK_TAG_EQ(TokTag_Lte, tok->tag);
+    tok_idx += 1;
+
+    TokSeq_Free(seq);
+
+    Lexer_Free(lex);
+
+    PASS();
+}
+
 SUITE(LexerSuite) {
     RUN_TEST(NameTokens);
+    RUN_TEST(ComparisonOperatorTokens);
 }
