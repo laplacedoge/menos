@@ -170,6 +170,18 @@ TokSeq_Count(
     return seq->num;
 }
 
+Token *
+TokSeq_At(
+    TokSeq * seq,
+    usize idx
+) {
+    if (idx >= seq->num) {
+        return NULL;
+    }
+
+    return (Token *)FlexBuf_Data(seq->buf) + idx;
+}
+
 bool
 TokSeq_Compact(
     TokSeq * seq

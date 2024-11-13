@@ -107,6 +107,12 @@ TokSeq_Count(
     TokSeq * seq
 );
 
+Token *
+TokSeq_At(
+    TokSeq * seq,
+    usize idx
+);
+
 bool
 TokSeq_Compact(
     TokSeq * seq
