@@ -524,6 +524,10 @@ Lexer_Finalize(
         return false;
     }
 
+    if (PushNormalToken(lex->seq, TokTag_Eof) == false) {
+        return false;
+    }
+
     TokSeq * new_seq = TokSeq_New();
     if (new_seq == NULL) {
         return false;
