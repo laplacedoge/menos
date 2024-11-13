@@ -2,6 +2,7 @@
 
 SUITE(FixedBufSuite);
 SUITE(FlexBufSuite);
+SUITE(LexerSuite);
 
 GREATEST_MAIN_DEFS();
 
@@ -10,6 +11,7 @@ int main(int argc, char **argv) {
 
     RUN_SUITE(FixedBufSuite);
     RUN_SUITE(FlexBufSuite);
+    RUN_SUITE(LexerSuite);
 
     GREATEST_MAIN_END();
 }
