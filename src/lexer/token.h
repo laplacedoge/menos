@@ -10,6 +10,16 @@ typedef enum _TokTag {
 
     /* Keywords. */
     TokTag_Let,
+    TokTag_If,
+    TokTag_Else,
+    TokTag_False,
+    TokTag_True,
+    TokTag_Match,
+    TokTag_While,
+    TokTag_For,
+    TokTag_Break,
+    TokTag_Continue,
+    TokTag_Return,
 
     /* Symbols. */
     TokTag_Assign,

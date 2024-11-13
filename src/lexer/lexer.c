@@ -45,9 +45,33 @@ KwTokEnt *
 kw_tok_map[] = {
     (KwTokEnt[]) { { NULL, 0 } },
     (KwTokEnt[]) { { NULL, 0 } },
-    (KwTokEnt[]) { { NULL, 0 } },
     (KwTokEnt[]) {
+        { "if", TokTag_If },
+        { NULL, 0 },
+    },
+    (KwTokEnt[]) {
+        { "for", TokTag_For },
         { "let", TokTag_Let },
+        { NULL, 0 },
+    },
+    (KwTokEnt[]) {
+        { "else", TokTag_Else },
+        { "true", TokTag_True },
+        { NULL, 0 },
+    },
+    (KwTokEnt[]) {
+        { "break", TokTag_Break },
+        { "false", TokTag_False },
+        { "match", TokTag_Match },
+        { "while", TokTag_While },
+        { NULL, 0 },
+    },
+    (KwTokEnt[]) {
+        { "return", TokTag_Return },
+        { NULL, 0 },
+    },
+    (KwTokEnt[]) {
+        { "continue", TokTag_Continue },
         { NULL, 0 },
     },
 };

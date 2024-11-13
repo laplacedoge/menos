@@ -12,6 +12,16 @@ TokTag_ToStr(
 ) {
     switch (tag) {
     case TokTag_Let: return "let";
+    case TokTag_If: return "if";
+    case TokTag_Else: return "else";
+    case TokTag_False: return "false";
+    case TokTag_True: return "true";
+    case TokTag_Match: return "match";
+    case TokTag_While: return "while";
+    case TokTag_For: return "for";
+    case TokTag_Break: return "break";
+    case TokTag_Continue: return "continue";
+    case TokTag_Return: return "return";
     case TokTag_Assign: return "=";
     case TokTag_Equ: return "==";
     case TokTag_Neq: return "!=";
@@ -105,6 +115,16 @@ Token_Free(
 ) {
     switch (tok->tag) {
     case TokTag_Let:
+    case TokTag_If:
+    case TokTag_Else:
+    case TokTag_False:
+    case TokTag_True:
+    case TokTag_Match:
+    case TokTag_While:
+    case TokTag_For:
+    case TokTag_Break:
+    case TokTag_Continue:
+    case TokTag_Return:
     case TokTag_Assign:
     case TokTag_Equ:
     case TokTag_Neq:
