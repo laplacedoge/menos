@@ -121,11 +121,11 @@ TEST ComparisonOperatorTokens(void) {
     tok_idx += 1;
 
     ASSERT_NEQ(NULL, tok = TokSeq_At(seq, tok_idx));
-    ASSERT_TOK_TAG_EQ(TokTag_RightBrace, tok->tag);
+    ASSERT_TOK_TAG_EQ(TokTag_GreaterThan, tok->tag);
     tok_idx += 1;
 
     ASSERT_NEQ(NULL, tok = TokSeq_At(seq, tok_idx));
-    ASSERT_TOK_TAG_EQ(TokTag_LeftBrace, tok->tag);
+    ASSERT_TOK_TAG_EQ(TokTag_LessThan, tok->tag);
     tok_idx += 1;
 
     ASSERT_NEQ(NULL, tok = TokSeq_At(seq, tok_idx));
@@ -144,9 +144,9 @@ TEST ComparisonOperatorTokens(void) {
 }
 
 TEST AllKindsOfBracketsTokens(void) {
-    const char * INPUT_STR = " () [] <> ";
+    const char * INPUT_STR = " () [] {} <> ";
     const usize INPUT_LEN = strlen(INPUT_STR);
-    const usize NUM_TOKS = 6 + 1;
+    const usize NUM_TOKS = 8 + 1;
 
     Lexer * lex = Lexer_New();
     ASSERT_NEQ(NULL, lex);
@@ -186,6 +186,14 @@ TEST AllKindsOfBracketsTokens(void) {
 
     ASSERT_NEQ(NULL, tok = TokSeq_At(seq, tok_idx));
     ASSERT_TOK_TAG_EQ(TokTag_RightBrace, tok->tag);
+    tok_idx += 1;
+
+    ASSERT_NEQ(NULL, tok = TokSeq_At(seq, tok_idx));
+    ASSERT_TOK_TAG_EQ(TokTag_LessThan, tok->tag);
+    tok_idx += 1;
+
+    ASSERT_NEQ(NULL, tok = TokSeq_At(seq, tok_idx));
+    ASSERT_TOK_TAG_EQ(TokTag_GreaterThan, tok->tag);
     tok_idx += 1;
 
     TokSeq_Free(seq);

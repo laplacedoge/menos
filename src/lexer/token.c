@@ -15,14 +15,16 @@ TokTag_ToStr(
     case TokTag_Assign: return "=";
     case TokTag_Equ: return "==";
     case TokTag_Neq: return "!=";
-    case TokTag_RightBrace: return ">";
+    case TokTag_GreaterThan: return ">";
     case TokTag_Gte: return ">=";
-    case TokTag_LeftBrace: return "<";
+    case TokTag_LessThan: return "<";
     case TokTag_Lte: return "<=";
     case TokTag_LeftParen: return "(";
     case TokTag_RightParen: return ")";
     case TokTag_LeftBracket: return "[";
     case TokTag_RightBracket: return "]";
+    case TokTag_LeftBrace: return "{";
+    case TokTag_RightBrace: return "}";
     case TokTag_Semicolon: return ";";
     case TokTag_Name: return "Name";
     case TokTag_NumLit: return "NumericLiteral";
@@ -106,14 +108,16 @@ Token_Free(
     case TokTag_Assign:
     case TokTag_Equ:
     case TokTag_Neq:
-    case TokTag_RightBrace:
+    case TokTag_GreaterThan:
     case TokTag_Gte:
-    case TokTag_LeftBrace:
+    case TokTag_LessThan:
     case TokTag_Lte:
     case TokTag_LeftParen:
     case TokTag_RightParen:
     case TokTag_LeftBracket:
     case TokTag_RightBracket:
+    case TokTag_LeftBrace:
+    case TokTag_RightBrace:
     case TokTag_Semicolon:
         break;
 

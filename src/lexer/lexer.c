@@ -293,6 +293,8 @@ Lexer_FeedByte_Idle(
         case ')': tag = TokTag_RightParen; break;
         case '[': tag = TokTag_LeftBracket; break;
         case ']': tag = TokTag_RightBracket; break;
+        case '{': tag = TokTag_LeftBrace; break;
+        case '}': tag = TokTag_RightBrace; break;
         case ';': tag = TokTag_Semicolon; break;
         default: found = false; break;
         }
@@ -465,7 +467,7 @@ Lexer_FeedByte_GtOrGte(
         tag = TokTag_Gte;
         res = FsmRes_Ok;
     } else {
-        tag = TokTag_RightBrace;
+        tag = TokTag_GreaterThan;
         res = FsmRes_Again;
     }
 
@@ -492,7 +494,7 @@ Lexer_FeedByte_LtOrLte(
         tag = TokTag_Lte;
         res = FsmRes_Ok;
     } else {
-        tag = TokTag_LeftBrace;
+        tag = TokTag_LessThan;
         res = FsmRes_Again;
     }
 
