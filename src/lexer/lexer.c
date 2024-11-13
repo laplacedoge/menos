@@ -10,12 +10,12 @@
 typedef enum _FsmStat {
     FsmStat_Idle,
     FsmStat_Name,
-    FsmStat_Num,
+    FsmStat_NumLit,
     FsmStat_StrLit,
-    FsmStat_AsgOrEqu,
+    FsmStat_AssignOrEqu,
     FsmStat_Neq,
-    FsmStat_GtOrGte,
-    FsmStat_LtOrLte,
+    FsmStat_RightBraceOrGte,
+    FsmStat_LeftBraceOrLte,
 } FsmStat;
 
 /* FSM result. */
@@ -234,7 +234,7 @@ Lexer_FeedByte_Idle(
     if (byte >= '0' && byte <= '9') {
         lex->num = byte - '0';
 
-        lex->stat = FsmStat_Num;
+        lex->stat = FsmStat_NumLit;
 
         return FsmRes_Ok;
     }
@@ -269,13 +269,13 @@ Lexer_FeedByte_Idle(
     /* Comparison operators. */
     do {
         if (byte == '=') {
-            lex->stat = FsmStat_AsgOrEqu;
+            lex->stat = FsmStat_AssignOrEqu;
         } else if (byte == '!') {
             lex->stat = FsmStat_Neq;
         } else if (byte == '>') {
-            lex->stat = FsmStat_GtOrGte;
+            lex->stat = FsmStat_RightBraceOrGte;
         } else if (byte == '<') {
-            lex->stat = FsmStat_LtOrLte;
+            lex->stat = FsmStat_LeftBraceOrLte;
         } else {
             break;
         }
@@ -457,7 +457,7 @@ Lexer_FeedByte_GtOrGte(
         tag = TokTag_Gte;
         res = FsmRes_Ok;
     } else {
-        tag = TokTag_Gt;
+        tag = TokTag_RightBrace;
         res = FsmRes_Again;
     }
 
@@ -484,7 +484,7 @@ Lexer_FeedByte_LtOrLte(
         tag = TokTag_Lte;
         res = FsmRes_Ok;
     } else {
-        tag = TokTag_Lt;
+        tag = TokTag_LeftBrace;
         res = FsmRes_Again;
     }
 
@@ -515,7 +515,7 @@ Lexer_FeedByte(
         res = Lexer_FeedByte_Name(lex, byte);
         break;
 
-    case FsmStat_Num:
+    case FsmStat_NumLit:
         res = Lexer_FeedByte_Num(lex, byte);
         break;
 
@@ -523,7 +523,7 @@ Lexer_FeedByte(
         res = Lexer_FeedByte_StrLit(lex, byte);
         break;
 
-    case FsmStat_AsgOrEqu:
+    case FsmStat_AssignOrEqu:
         res = Lexer_FeedByte_AsgOrEqu(lex, byte);
         break;
 
@@ -531,11 +531,11 @@ Lexer_FeedByte(
         res = Lexer_FeedByte_Neq(lex, byte);
         break;
 
-    case FsmStat_GtOrGte:
+    case FsmStat_RightBraceOrGte:
         res = Lexer_FeedByte_GtOrGte(lex, byte);
         break;
 
-    case FsmStat_LtOrLte:
+    case FsmStat_LeftBraceOrLte:
         res = Lexer_FeedByte_LtOrLte(lex, byte);
         break;
     }
@@ -624,7 +624,7 @@ FsmRes
 Lexer_FeedEol_GtOrGte(
     Lexer * lex
 ) {
-    if (PushNormalToken(lex->seq, TokTag_Gt) == false) {
+    if (PushNormalToken(lex->seq, TokTag_RightBrace) == false) {
         return FsmRes_NoMemory;
     }
 
@@ -639,7 +639,7 @@ FsmRes
 Lexer_FeedEol_LtOrLte(
     Lexer * lex
 ) {
-    if (PushNormalToken(lex->seq, TokTag_Lt) == false) {
+    if (PushNormalToken(lex->seq, TokTag_LeftBrace) == false) {
         return FsmRes_NoMemory;
     }
 
@@ -664,7 +664,7 @@ Lexer_FeedEol(
         res = Lexer_FeedEol_Name(lex);
         break;
 
-    case FsmStat_Num:
+    case FsmStat_NumLit:
         res = Lexer_FeedEol_Num(lex);
         break;
 
@@ -672,7 +672,7 @@ Lexer_FeedEol(
         res = Lexer_FeedEol_StrLit(lex);
         break;
 
-    case FsmStat_AsgOrEqu:
+    case FsmStat_AssignOrEqu:
         res = Lexer_FeedEol_AsgOrEqu(lex);
         break;
 
@@ -680,11 +680,11 @@ Lexer_FeedEol(
         res = Lexer_FeedEol_Neq(lex);
         break;
 
-    case FsmStat_GtOrGte:
+    case FsmStat_RightBraceOrGte:
         res = Lexer_FeedEol_GtOrGte(lex);
         break;
 
-    case FsmStat_LtOrLte:
+    case FsmStat_LeftBraceOrLte:
         res = Lexer_FeedEol_LtOrLte(lex);
         break;
     }

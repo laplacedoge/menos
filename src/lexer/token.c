@@ -15,9 +15,9 @@ TokTag_ToStr(
     case TokTag_Assign: return "=";
     case TokTag_Equ: return "==";
     case TokTag_Neq: return "!=";
-    case TokTag_Gt: return ">";
+    case TokTag_RightBrace: return ">";
     case TokTag_Gte: return ">=";
-    case TokTag_Lt: return "<";
+    case TokTag_LeftBrace: return "<";
     case TokTag_Lte: return "<=";
     case TokTag_Semicolon: return ";";
     case TokTag_Name: return "Name";
@@ -102,9 +102,9 @@ Token_Free(
     case TokTag_Assign:
     case TokTag_Equ:
     case TokTag_Neq:
-    case TokTag_Gt:
+    case TokTag_RightBrace:
     case TokTag_Gte:
-    case TokTag_Lt:
+    case TokTag_LeftBrace:
     case TokTag_Lte:
     case TokTag_Semicolon:
         break;

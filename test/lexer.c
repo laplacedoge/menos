@@ -121,11 +121,11 @@ TEST ComparisonOperatorTokens(void) {
     tok_idx += 1;
 
     ASSERT_NEQ(NULL, tok = TokSeq_At(seq, tok_idx));
-    ASSERT_TOK_TAG_EQ(TokTag_Gt, tok->tag);
+    ASSERT_TOK_TAG_EQ(TokTag_RightBrace, tok->tag);
     tok_idx += 1;
 
     ASSERT_NEQ(NULL, tok = TokSeq_At(seq, tok_idx));
-    ASSERT_TOK_TAG_EQ(TokTag_Lt, tok->tag);
+    ASSERT_TOK_TAG_EQ(TokTag_LeftBrace, tok->tag);
     tok_idx += 1;
 
     ASSERT_NEQ(NULL, tok = TokSeq_At(seq, tok_idx));
