@@ -23,6 +23,10 @@ typedef enum _TokTag {
 
     /* Symbols. */
     TokTag_Assign,
+    TokTag_Plus,
+    TokTag_Minus,
+    TokTag_Asterisk,
+    TokTag_ForwardSlash,
     TokTag_Equ,
     TokTag_Neq,
     TokTag_GreaterThan,

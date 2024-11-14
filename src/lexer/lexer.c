@@ -319,6 +319,10 @@ Lexer_FeedByte_Idle(
         case ']': tag = TokTag_RightBracket; break;
         case '{': tag = TokTag_LeftBrace; break;
         case '}': tag = TokTag_RightBrace; break;
+        case '+': tag = TokTag_Plus; break;
+        case '-': tag = TokTag_Minus; break;
+        case '*': tag = TokTag_Asterisk; break;
+        case '/': tag = TokTag_ForwardSlash; break;
         case ';': tag = TokTag_Semicolon; break;
         default: found = false; break;
         }

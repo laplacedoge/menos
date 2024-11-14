@@ -23,6 +23,10 @@ TokTag_ToStr(
     case TokTag_Continue: return "continue";
     case TokTag_Return: return "return";
     case TokTag_Assign: return "=";
+    case TokTag_Plus: return "+";
+    case TokTag_Minus: return "-";
+    case TokTag_Asterisk: return "*";
+    case TokTag_ForwardSlash: return "/";
     case TokTag_Equ: return "==";
     case TokTag_Neq: return "!=";
     case TokTag_GreaterThan: return ">";
@@ -126,6 +130,10 @@ Token_Free(
     case TokTag_Continue:
     case TokTag_Return:
     case TokTag_Assign:
+    case TokTag_Plus:
+    case TokTag_Minus:
+    case TokTag_Asterisk:
+    case TokTag_ForwardSlash:
     case TokTag_Equ:
     case TokTag_Neq:
     case TokTag_GreaterThan:
