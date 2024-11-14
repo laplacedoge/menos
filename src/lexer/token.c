@@ -49,18 +49,38 @@ TokTag_ToStr(
 
 void
 Token_Init(
-    Token * tok
+    Token * tok,
+    TokTag tag,
+    usize row,
+    usize col,
+    usize len
 ) {
-    memset(tok, 0, sizeof(Token));
+    tok->tag = tag;
+    tok->row = row;
+    tok->col = col;
+    tok->len = len;
+    memset(&tok->ext, 0, sizeof(tok->ext));
 }
 
-void
-Token_InitWithTag(
-    Token * tok,
-    TokTag tag
+usize
+Token_Row(
+    Token * tok
 ) {
-    Token_Init(tok);
-    tok->tag = tag;
+    return tok->row;
+}
+
+usize
+Token_Column(
+    Token * tok
+) {
+    return tok->col;
+}
+
+usize
+Token_Length(
+    Token * tok
+) {
+    return tok->len;
 }
 
 bool
@@ -71,15 +91,17 @@ Token_PushAsStr(
     do {
         switch (tok->tag) {
         case TokTag_Name:
-            return FlexBuf_PushFmt(buf, "<%s \"%.*s\">",
+            return FlexBuf_PushFmt(buf, "<%s \"%.*s\" @%zu:%zu+%zu>",
                 TokTag_ToStr(tok->tag),
                 FixedBuf_Size(tok->ext.name.str),
-                FixedBuf_Data(tok->ext.name.str));
+                FixedBuf_Data(tok->ext.name.str),
+                tok->row, tok->col, tok->len);
 
         case TokTag_NumLit:
-            return FlexBuf_PushFmt(buf, "<%s %zu>",
+            return FlexBuf_PushFmt(buf, "<%s %zu @%zu:%zu+%zu>",
                 TokTag_ToStr(tok->tag),
-                tok->ext.num_lit.val);
+                tok->ext.num_lit.val,
+                tok->row, tok->col, tok->len);
 
         case TokTag_StrLit: {
             FixedBuf * escaped_str =
@@ -88,10 +110,11 @@ Token_PushAsStr(
                 return false;
             }
 
-            bool res = FlexBuf_PushFmt(buf, "<%s \"%.*s\">",
+            bool res = FlexBuf_PushFmt(buf, "<%s \"%.*s\" @%zu:%zu+%zu>",
                 TokTag_ToStr(tok->tag),
                 FixedBuf_Size(escaped_str),
-                FixedBuf_Data(escaped_str));
+                FixedBuf_Data(escaped_str),
+                tok->row, tok->col, tok->len);
 
             FixedBuf_Free(escaped_str);
 
@@ -105,11 +128,13 @@ Token_PushAsStr(
 
     if (tok->tag == TokTag_Eof) {
         const char * str = TokTag_ToStr(tok->tag);
-        return FlexBuf_PushFmt(buf, "<Keyword %s>", str);
+        return FlexBuf_PushFmt(buf, "<Keyword %s @%zu:%zu+%zu>",
+            str, tok->row, tok->col, tok->len);
     }
 
     const char * str = TokTag_ToStr(tok->tag);
-    return FlexBuf_PushFmt(buf, "<Keyword '%s'>", str);
+    return FlexBuf_PushFmt(buf, "<Keyword '%s' @%zu:%zu+%zu>",
+        str, tok->row, tok->col, tok->len);
 }
 
 static

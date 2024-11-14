@@ -59,14 +59,14 @@ typedef struct _Token {
     /* Token tag. */
     TokTag tag;
 
-    /* Line no. */
-    usize line_no;
+    /* The row index where the lexeme is located. */
+    usize row;
 
-    /* Lexeme offset within the line. */
-    usize lex_off;
+    /* The column index where the lexeme is located. */
+    usize col;
 
     /* Lexeme length. */
-    usize lex_len;
+    usize len;
 
     /* Extra token attributes. */
     union {
@@ -96,13 +96,26 @@ typedef struct _Token {
 
 void
 Token_Init(
+    Token * tok,
+    TokTag tag,
+    usize row,
+    usize col,
+    usize len
+);
+
+usize
+Token_Row(
     Token * tok
 );
 
-void
-Token_InitWithTag(
-    Token * tok,
-    TokTag tag
+usize
+Token_Column(
+    Token * tok
+);
+
+usize
+Token_Length(
+    Token * tok
 );
 
 bool
