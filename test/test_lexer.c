@@ -33,8 +33,7 @@ TEST NameTokens(void) {
     ASSERT_NEQ(NULL, lex);
 
     TokSeq * seq;
-    ASSERT(Lexer_Feed(lex, INPUT_STR, INPUT_LEN));
-    ASSERT(Lexer_Finalize(lex, &seq));
+    ASSERT(Lexer_ScanBuf(lex, INPUT_STR, INPUT_LEN, &seq));
 
     ASSERT_NEQ(NULL, seq);
     ASSERT_EQ_FMT(NUM_TOKS, TokSeq_Count(seq), "%zu");
@@ -130,8 +129,7 @@ TEST ComparisonOperatorTokens(void) {
     ASSERT_NEQ(NULL, lex);
 
     TokSeq * seq;
-    ASSERT(Lexer_Feed(lex, INPUT_STR, INPUT_LEN));
-    ASSERT(Lexer_Finalize(lex, &seq));
+    ASSERT(Lexer_ScanBuf(lex, INPUT_STR, INPUT_LEN, &seq));
 
     ASSERT_NEQ(NULL, seq);
     ASSERT_EQ_FMT(NUM_TOKS, TokSeq_Count(seq), "%zu");
@@ -213,8 +211,7 @@ TEST AllKindsOfBracketsTokens(void) {
     ASSERT_NEQ(NULL, lex);
 
     TokSeq * seq;
-    ASSERT(Lexer_Feed(lex, INPUT_STR, INPUT_LEN));
-    ASSERT(Lexer_Finalize(lex, &seq));
+    ASSERT(Lexer_ScanBuf(lex, INPUT_STR, INPUT_LEN, &seq));
 
     ASSERT_NEQ(NULL, seq);
     ASSERT_EQ_FMT(NUM_TOKS, TokSeq_Count(seq), "%zu");
@@ -307,8 +304,7 @@ TEST ScanMultiLineInput(void) {
     ASSERT_NEQ(NULL, lex);
 
     TokSeq * seq;
-    ASSERT(Lexer_Feed(lex, INPUT_STR, INPUT_LEN));
-    ASSERT(Lexer_Finalize(lex, &seq));
+    ASSERT(Lexer_ScanBuf(lex, INPUT_STR, INPUT_LEN, &seq));
 
     ASSERT_NEQ(NULL, seq);
     ASSERT_EQ_FMT(NUM_TOKS, TokSeq_Count(seq), "%zu");
@@ -367,10 +363,12 @@ TEST LinebreakTerminatedStringLiteral(void) {
     Lexer * lex = Lexer_New();
     ASSERT_NEQ(NULL, lex);
 
+    TokSeq * seq;
+
     INPUT_STR = "var = \"Hello\n";
     INPUT_LEN = strlen(INPUT_STR);
 
-    ASSERT_FALSE(Lexer_Feed(lex, INPUT_STR, INPUT_LEN));
+    ASSERT_FALSE(Lexer_ScanBuf(lex, INPUT_STR, INPUT_LEN, &seq));
     ASSERT_LEX_ERR_EQ(LexErr_UnexpectedByte, Lexer_ErrorType(lex));
     ASSERT_EQ_FMT(1UL, Lexer_ErrorLineNo(lex), "%zu");
     ASSERT_EQ_FMT(13UL, Lexer_ErrorColumnNo(lex), "%zu");
@@ -380,7 +378,7 @@ TEST LinebreakTerminatedStringLiteral(void) {
     INPUT_STR = "var = \"Hello\r\n";
     INPUT_LEN = strlen(INPUT_STR);
 
-    ASSERT_FALSE(Lexer_Feed(lex, INPUT_STR, INPUT_LEN));
+    ASSERT_FALSE(Lexer_ScanBuf(lex, INPUT_STR, INPUT_LEN, &seq));
     ASSERT_LEX_ERR_EQ(LexErr_UnexpectedByte, Lexer_ErrorType(lex));
     ASSERT_EQ_FMT(1UL, Lexer_ErrorLineNo(lex), "%zu");
     ASSERT_EQ_FMT(13UL, Lexer_ErrorColumnNo(lex), "%zu");
