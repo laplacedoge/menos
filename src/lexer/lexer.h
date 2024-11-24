@@ -33,6 +33,21 @@ Lexer_Finalize(
     TokSeq ** seq
 );
 
+bool
+Lexer_ScanBuf(
+    Lexer * lex,
+    const void * buf,
+    usize len,
+    TokSeq ** seq
+);
+
+bool
+Lexer_ScanFile(
+    Lexer * lex,
+    const char * path,
+    TokSeq ** seq
+);
+
 LexErr
 Lexer_ErrorType(
     Lexer * lex

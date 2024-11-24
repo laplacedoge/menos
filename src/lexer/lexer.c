@@ -38,6 +38,12 @@ typedef enum _FsmRes {
 } FsmRes;
 
 typedef struct _Lexer {
+
+    /* Input-related attributes. */
+    struct {
+        FixedBuf * src;
+    } in;
+
     FsmStat stat;
     FlexBuf * str;
     usize num;
@@ -113,25 +119,32 @@ max_kw_tok_len = num_kw_tok_ents - 1;
 
 Lexer *
 Lexer_New(void) {
-    TokSeq * seq = TokSeq_New();
-    if (seq == NULL) {
+    FixedBuf * in_src = FixedBuf_NewWithLen(0);
+    if (in_src == NULL) {
         goto Exit;
     }
 
     FlexBuf * str = FlexBuf_New();
     if (str == NULL) {
-        goto FreeSeq;
+        goto FreeSrc;
+    }
+
+    TokSeq * seq = TokSeq_New();
+    if (seq == NULL) {
+        goto FreeStr;
     }
 
     FlexBuf * err_msg = FlexBuf_New();
     if (err_msg == NULL) {
-        goto FreeStr;
+        goto FreeSeq;
     }
 
     Lexer * lex = (Lexer *)MeMem_Malloc(sizeof(Lexer));
     if (lex == NULL) {
         goto FreeErrMsg;
     }
+
+    lex->in.src = in_src;
 
     lex->stat = FsmStat_Idle;
     lex->str = str;
@@ -153,11 +166,14 @@ Lexer_New(void) {
 FreeErrMsg:
     FlexBuf_Free(err_msg);
 
+FreeSeq:
+    TokSeq_Free(seq);
+
 FreeStr:
     FlexBuf_Free(str);
 
-FreeSeq:
-    TokSeq_Free(seq);
+FreeSrc:
+    FixedBuf_Free(in_src);
 
 Exit:
     return NULL;
@@ -927,8 +943,10 @@ Lexer_SetErrorInfo(
         break;
 
     case LexErr_UnexpectedByte:
-        FlexBuf_PushFmt(msg, "%s: %s %s at input:%zu:%zu",
-            PREFIX, err_msg, ByteToStr(byte), row_no, col_no);
+        FlexBuf_PushFmt(msg, "%.*s:%zu:%zu: %s: %s %s",
+            (int)FixedBuf_Size(lex->in.src),
+            (char *)FixedBuf_Data(lex->in.src),
+            row_no, col_no, PREFIX, err_msg, ByteToStr(byte));
         break;
     }
 
@@ -966,6 +984,8 @@ void
 Lexer_ResetFsmInfo(
     Lexer * lex
 ) {
+    FixedBuf_Clear(lex->in.src);
+
     lex->stat = FsmStat_Idle;
     FlexBuf_Clear(lex->str);
     lex->num = 0;
@@ -1036,6 +1056,68 @@ Lexer_Finalize(
     return true;
 }
 
+bool
+Lexer_ScanBuf(
+    Lexer * lex,
+    const void * buf,
+    usize len,
+    TokSeq ** seq
+) {
+    FixedBuf * in_src = FixedBuf_NewFromStr("<buffer>");
+    if (in_src == NULL) {
+        return false;
+    }
+
+    FixedBuf_Free(lex->in.src);
+    lex->in.src = in_src;
+
+    if (Lexer_Feed(lex, buf, len) == false ||
+        Lexer_Finalize(lex, seq) == false) {
+        return false;
+    }
+
+    return true;
+}
+
+bool
+Lexer_ScanFile(
+    Lexer * lex,
+    const char * path,
+    TokSeq ** seq
+) {
+    FixedBuf * file_data = FixedBuf_NewFromFile(path);
+    if (file_data == NULL) {
+        goto Exit;
+    }
+
+    const u8 * const file_buf = FixedBuf_Data(file_data);
+    const usize file_len = FixedBuf_Size(file_data);
+
+    FixedBuf * in_src = FixedBuf_NewFromStr(path);
+    if (in_src == NULL) {
+        goto FreeFileData;
+    }
+
+    FixedBuf_Free(lex->in.src);
+    lex->in.src = in_src;
+
+    if (Lexer_Feed(lex, file_buf, file_len) == false ||
+        Lexer_Finalize(lex, seq) == false) {
+
+        goto FreeFileData;
+    }
+
+    FixedBuf_Free(file_data);
+
+    return true;
+
+FreeFileData:
+    FixedBuf_Free(file_data);
+
+Exit:
+    return false;
+}
+
 LexErr
 Lexer_ErrorType(
     Lexer * lex
@@ -1077,6 +1159,7 @@ void
 Lexer_Free(
     Lexer * lex
 ) {
+    FixedBuf_Free(lex->in.src);
     FlexBuf_Free(lex->str);
     TokSeq_Free(lex->seq);
     FlexBuf_Free(lex->err.msg);
