@@ -366,6 +366,19 @@ FixedBuf_Join(
 }
 
 void
+FixedBuf_Clear(
+    FixedBuf * obj
+) {
+    if (obj->buf == NULL) {
+        return;
+    }
+
+    MeMem_Free(obj->buf);
+    obj->buf = NULL;
+    obj->len = 0;
+}
+
+void
 FixedBuf_Free(
     FixedBuf * obj
 ) {

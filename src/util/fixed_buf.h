@@ -69,6 +69,11 @@ FixedBuf_Join(
 );
 
 void
+FixedBuf_Clear(
+    FixedBuf * buf
+);
+
+void
 FixedBuf_Free(
     FixedBuf * buf
 );
