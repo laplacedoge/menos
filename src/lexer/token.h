@@ -165,6 +165,11 @@ TokSeq_PushAsStr(
 );
 
 void
+TokSeq_Clear(
+    TokSeq * seq
+);
+
+void
 TokSeq_Free(
     TokSeq * seq
 );

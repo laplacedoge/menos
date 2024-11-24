@@ -363,6 +363,15 @@ TokSeq_FreeTokens(
 }
 
 void
+TokSeq_Clear(
+    TokSeq * seq
+) {
+    TokSeq_FreeTokens(seq);
+    FlexBuf_Clear(seq->buf);
+    seq->num = 0;
+}
+
+void
 TokSeq_Free(
     TokSeq * seq
 ) {
