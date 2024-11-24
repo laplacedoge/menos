@@ -11,8 +11,18 @@ TokTag_ToStr_Intf(
     return TokTag_ToStr((TokTag)tag);
 }
 
+const char *
+LexErr_ToStr_Intf(
+    int err
+) {
+    return LexErr_ToStr((LexErr)err);
+}
+
 #define ASSERT_TOK_TAG_EQ(expected, actual) \
     ASSERT_ENUM_EQ(expected, actual, TokTag_ToStr_Intf);
+
+#define ASSERT_LEX_ERR_EQ(expected, actual) \
+    ASSERT_ENUM_EQ(expected, actual, LexErr_ToStr_Intf);
 
 TEST NameTokens(void) {
     const char * INPUT_STR = " __cache__ VAR_2 47agent ak47 api32sucks";
@@ -350,9 +360,40 @@ TEST ScanMultiLineInput(void) {
     PASS();
 }
 
+TEST LinebreakTerminatedStringLiteral(void) {
+    const char * INPUT_STR;
+    usize INPUT_LEN;
+
+    Lexer * lex = Lexer_New();
+    ASSERT_NEQ(NULL, lex);
+
+    INPUT_STR = "var = \"Hello\n";
+    INPUT_LEN = strlen(INPUT_STR);
+
+    ASSERT_FALSE(Lexer_Feed(lex, INPUT_STR, INPUT_LEN));
+    ASSERT_LEX_ERR_EQ(LexErr_UnexpectedByte, Lexer_ErrorType(lex));
+    ASSERT_EQ_FMT(1UL, Lexer_ErrorLineNo(lex), "%zu");
+    ASSERT_EQ_FMT(13UL, Lexer_ErrorColumnNo(lex), "%zu");
+
+    Lexer_Reset(lex);
+
+    INPUT_STR = "var = \"Hello\r\n";
+    INPUT_LEN = strlen(INPUT_STR);
+
+    ASSERT_FALSE(Lexer_Feed(lex, INPUT_STR, INPUT_LEN));
+    ASSERT_LEX_ERR_EQ(LexErr_UnexpectedByte, Lexer_ErrorType(lex));
+    ASSERT_EQ_FMT(1UL, Lexer_ErrorLineNo(lex), "%zu");
+    ASSERT_EQ_FMT(13UL, Lexer_ErrorColumnNo(lex), "%zu");
+
+    Lexer_Free(lex);
+
+    PASS();
+}
+
 SUITE(LexerSuite) {
     RUN_TEST(NameTokens);
     RUN_TEST(ComparisonOperatorTokens);
     RUN_TEST(AllKindsOfBracketsTokens);
     RUN_TEST(ScanMultiLineInput);
+    RUN_TEST(LinebreakTerminatedStringLiteral);
 }
