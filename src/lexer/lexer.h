@@ -4,6 +4,17 @@
 #include "menos.h"
 #include "lexer/token.h"
 
+typedef enum _LexErr {
+    LexErr_Ok,
+    LexErr_NoEnoughMemory,
+    LexErr_UnexpectedByte,
+} LexErr;
+
+const char *
+LexErr_ToStr(
+    LexErr err
+);
+
 typedef struct _Lexer Lexer;
 
 Lexer *
@@ -20,6 +31,31 @@ bool
 Lexer_Finalize(
     Lexer * lex,
     TokSeq ** seq
+);
+
+LexErr
+Lexer_ErrorType(
+    Lexer * lex
+);
+
+FlexBuf *
+Lexer_ErrorMessage(
+    Lexer * lex
+);
+
+usize
+Lexer_ErrorLineNo(
+    Lexer * lex
+);
+
+usize
+Lexer_ErrorColumnNo(
+    Lexer * lex
+);
+
+void
+Lexer_Reset(
+    Lexer * lex
 );
 
 void

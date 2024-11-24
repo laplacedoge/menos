@@ -6,6 +6,17 @@
 #include "util/fixed_buf.h"
 #include "util/flex_buf.h"
 
+const char *
+LexErr_ToStr(
+    LexErr err
+) {
+    switch (err) {
+    case LexErr_Ok: return "Ok";
+    case LexErr_NoEnoughMemory: return "No enough memory";
+    case LexErr_UnexpectedByte: return "Unexpected byte";
+    }
+}
+
 /* FSM state. */
 typedef enum _FsmStat {
     FsmStat_Idle,
@@ -23,8 +34,7 @@ typedef enum _FsmStat {
 typedef enum _FsmRes {
     FsmRes_Ok,
     FsmRes_Again,
-    FsmRes_NoMemory,
-    FsmRes_UnexpectedByte,
+    FsmRes_Error,
 } FsmRes;
 
 typedef struct _Lexer {
@@ -39,6 +49,13 @@ typedef struct _Lexer {
         usize off;
         usize len;
     } tok;
+
+    struct {
+        LexErr type;
+        FlexBuf * msg;
+        usize line_no;
+        usize col_no;
+    } err;
 } Lexer;
 
 /* Keyword token entry. */
@@ -106,9 +123,14 @@ Lexer_New(void) {
         goto FreeSeq;
     }
 
+    FlexBuf * err_msg = FlexBuf_New();
+    if (err_msg == NULL) {
+        goto FreeStr;
+    }
+
     Lexer * lex = (Lexer *)MeMem_Malloc(sizeof(Lexer));
     if (lex == NULL) {
-        goto FreeStr;
+        goto FreeErrMsg;
     }
 
     lex->stat = FsmStat_Idle;
@@ -121,7 +143,15 @@ Lexer_New(void) {
     lex->tok.off = 0;
     lex->tok.len = 0;
 
+    lex->err.type = LexErr_Ok;
+    lex->err.msg = err_msg;
+    lex->err.line_no = 0;
+    lex->err.col_no = 0;
+
     return lex;
+
+FreeErrMsg:
+    FlexBuf_Free(err_msg);
 
 FreeStr:
     FlexBuf_Free(str);
@@ -245,6 +275,14 @@ Exit:
     return false;
 }
 
+#define RAISE_NO_ENOUGH_MEMORY_ERROR()  \
+    lex->err.type = LexErr_NoEnoughMemory;  \
+    return FsmRes_Error;
+
+#define RAISE_UNEXPECTED_BYTE_ERROR()  \
+    lex->err.type = LexErr_UnexpectedByte;  \
+    return FsmRes_Error;
+
 static
 inline
 FsmRes
@@ -293,7 +331,7 @@ Lexer_FeedByte_Idle(
         /* Clear the string buffer and push the first character. */
         FlexBuf_Clear(lex->str);
         if (FlexBuf_PushByte(lex->str, byte) == false) {
-            return FsmRes_NoMemory;
+            RAISE_NO_ENOUGH_MEMORY_ERROR();
         }
 
         lex->tok.off = lex->tok.col;
@@ -366,14 +404,14 @@ Lexer_FeedByte_Idle(
         lex->tok.len = 1;
 
         if (PushNormalToken(lex, tag) == false) {
-            return FsmRes_NoMemory;
+            RAISE_NO_ENOUGH_MEMORY_ERROR();
         }
 
         return FsmRes_Ok;
 
     } while (false);
 
-    return FsmRes_UnexpectedByte;
+    RAISE_UNEXPECTED_BYTE_ERROR();
 }
 
 static
@@ -411,7 +449,7 @@ Lexer_FeedByte_Name(
 
         /* Push this character to the string buffer. */
         if (FlexBuf_PushByte(lex->str, byte) == false) {
-            return FsmRes_NoMemory;
+            RAISE_NO_ENOUGH_MEMORY_ERROR();
         }
 
         lex->tok.len++;
@@ -421,7 +459,7 @@ Lexer_FeedByte_Name(
 
     /* This name is finished, push it to the token sequence. */
     if (PushNameToken(lex) == false) {
-        return FsmRes_NoMemory;
+        RAISE_NO_ENOUGH_MEMORY_ERROR();
     }
 
     lex->stat = FsmStat_Idle;
@@ -449,7 +487,7 @@ Lexer_FeedByte_Num(
 
     /* This number is finished, push it to the token sequence. */
     if (PushNumberToken(lex) == false) {
-        return FsmRes_NoMemory;
+        RAISE_NO_ENOUGH_MEMORY_ERROR();
     }
 
     lex->stat = FsmStat_Idle;
@@ -469,7 +507,7 @@ Lexer_FeedByte_StrLit(
     if (byte == '\r' ||
         byte == '\n') {
 
-        return FsmRes_UnexpectedByte;
+        RAISE_UNEXPECTED_BYTE_ERROR();
     }
 
     /* If this string literal is finished, push it to the token sequence. */
@@ -477,7 +515,7 @@ Lexer_FeedByte_StrLit(
         lex->tok.len++;
 
         if (PushStringLiteralToken(lex) == false) {
-            return FsmRes_NoMemory;
+            RAISE_NO_ENOUGH_MEMORY_ERROR();
         }
 
         lex->stat = FsmStat_Idle;
@@ -487,7 +525,7 @@ Lexer_FeedByte_StrLit(
 
     /* Push this character to the string buffer. */
     if (FlexBuf_PushByte(lex->str, byte) == false) {
-        return FsmRes_NoMemory;
+        RAISE_NO_ENOUGH_MEMORY_ERROR();
     }
 
     lex->tok.len++;
@@ -515,7 +553,7 @@ Lexer_FeedByte_AsgOrEqu(
     }
 
     if (PushNormalToken(lex, tag) == false) {
-        return FsmRes_NoMemory;
+        RAISE_NO_ENOUGH_MEMORY_ERROR();
     }
 
     lex->stat = FsmStat_Idle;
@@ -534,7 +572,7 @@ Lexer_FeedByte_Neq(
         lex->tok.len++;
 
         if (PushNormalToken(lex, TokTag_Neq) == false) {
-            return FsmRes_NoMemory;
+            RAISE_NO_ENOUGH_MEMORY_ERROR();
         }
 
         lex->stat = FsmStat_Idle;
@@ -542,7 +580,7 @@ Lexer_FeedByte_Neq(
         return FsmRes_Ok;
     }
 
-    return FsmRes_UnexpectedByte;
+    RAISE_UNEXPECTED_BYTE_ERROR();
 }
 
 static
@@ -565,7 +603,7 @@ Lexer_FeedByte_GtOrGte(
     }
 
     if (PushNormalToken(lex, tag) == false) {
-        return FsmRes_NoMemory;
+        RAISE_NO_ENOUGH_MEMORY_ERROR();
     }
 
     lex->stat = FsmStat_Idle;
@@ -593,7 +631,7 @@ Lexer_FeedByte_LtOrLte(
     }
 
     if (PushNormalToken(lex, tag) == false) {
-        return FsmRes_NoMemory;
+        RAISE_NO_ENOUGH_MEMORY_ERROR();
     }
 
     lex->stat = FsmStat_Idle;
@@ -667,7 +705,7 @@ Lexer_FeedEol_Name(
 
     /* This name is finished, push it to the token sequence. */
     if (PushNameToken(lex) == false) {
-        return FsmRes_NoMemory;
+        RAISE_NO_ENOUGH_MEMORY_ERROR();
     }
 
     lex->stat = FsmStat_Idle;
@@ -698,7 +736,7 @@ Lexer_FeedEol_Num(
 
     /* This number is finished, push it to the token sequence. */
     if (PushNumberToken(lex) == false) {
-        return FsmRes_NoMemory;
+        RAISE_NO_ENOUGH_MEMORY_ERROR();
     }
 
     lex->stat = FsmStat_Idle;
@@ -715,7 +753,7 @@ Lexer_FeedEol_StrLit(
 
     /* If this string literal is finished, push it to the token sequence. */
     if (PushStringLiteralToken(lex) == false) {
-        return FsmRes_NoMemory;
+        RAISE_NO_ENOUGH_MEMORY_ERROR();
     }
 
     lex->stat = FsmStat_Idle;
@@ -730,7 +768,7 @@ Lexer_FeedEol_AsgOrEqu(
     Lexer * lex
 ) {
     if (PushNormalToken(lex, TokTag_Assign) == false) {
-        return FsmRes_NoMemory;
+        RAISE_NO_ENOUGH_MEMORY_ERROR();
     }
 
     lex->stat = FsmStat_Idle;
@@ -744,7 +782,7 @@ FsmRes
 Lexer_FeedEol_Neq(
     Lexer * lex
 ) {
-    return FsmRes_UnexpectedByte;
+    RAISE_UNEXPECTED_BYTE_ERROR();
 }
 
 static
@@ -754,7 +792,7 @@ Lexer_FeedEol_GtOrGte(
     Lexer * lex
 ) {
     if (PushNormalToken(lex, TokTag_RightBrace) == false) {
-        return FsmRes_NoMemory;
+        RAISE_NO_ENOUGH_MEMORY_ERROR();
     }
 
     lex->stat = FsmStat_Idle;
@@ -769,7 +807,7 @@ Lexer_FeedEol_LtOrLte(
     Lexer * lex
 ) {
     if (PushNormalToken(lex, TokTag_LeftBrace) == false) {
-        return FsmRes_NoMemory;
+        RAISE_NO_ENOUGH_MEMORY_ERROR();
     }
 
     lex->stat = FsmStat_Idle;
@@ -825,6 +863,79 @@ Lexer_FeedEol(
     return res;
 }
 
+static
+const char *
+ByteToStr(
+    u8 byte
+) {
+    if (byte < 0x20) {
+        switch (byte) {
+        case '\t': return "'\\t'";
+        case '\n': return "'\\n'";
+        case '\r': return "'\\r'";
+        default: {
+            const char * const TABLE[] = {
+                "NUL", "SOH", "STX", "ETX", "EOT", "ENQ", "ACK", "BEL",
+                "BS", "HT", "LF", "VT", "FF", "CR", "SO", "SI",
+                "DLE", "DC1", "DC2", "DC3", "DC4", "NAK", "SYN", "ETB",
+                "CAN", "EM", "SUB", "ESC", "FS", "GS", "RS", "US",
+            };
+
+            return TABLE[byte];
+        }
+        }
+    } else if (byte < 0x7F) {
+        if (byte == '\'') {
+            return "'\\''";
+        } else {
+            static char buf[4] = { '\'', ' ', '\'', '\0' };
+            buf[1] = byte;
+            return buf;
+        }
+    } else if (byte > 0x7F) {
+        const char TABLE[] = "01234567890ABCDEF";
+        static char buf[7] = { '\'', '\\', 'x', '0', '0', '\'', '\0' };
+        buf[3] = TABLE[byte >> 4];
+        buf[4] = TABLE[byte & 0x0F];
+        return buf;
+    } else {
+        return "DEL";
+    }
+}
+
+static
+void
+Lexer_SetErrorInfo(
+    Lexer * lex,
+    u8 byte
+) {
+    const char * PREFIX = "Lexer error";
+    FlexBuf * msg = lex->err.msg;
+    const LexErr err = lex->err.type;
+    const char * const err_msg = LexErr_ToStr(err);
+
+    usize row_no = lex->tok.row + 1;
+    usize col_no = lex->tok.col + 1;
+
+    switch (err) {
+    case LexErr_Ok:
+        break;
+
+    case LexErr_NoEnoughMemory:
+        FlexBuf_PushFmt(msg, "%s: %s",
+            PREFIX, err_msg);
+        break;
+
+    case LexErr_UnexpectedByte:
+        FlexBuf_PushFmt(msg, "%s: %s %s at input:%zu:%zu",
+            PREFIX, err_msg, ByteToStr(byte), row_no, col_no);
+        break;
+    }
+
+    lex->err.line_no = row_no;
+    lex->err.col_no = col_no;
+}
+
 bool
 Lexer_Feed(
     Lexer * lex,
@@ -840,14 +951,47 @@ Lexer_Feed(
                 break;
             } else if (res == FsmRes_Again) {
                 continue;
-            } else if (res == FsmRes_NoMemory ||
-                       res == FsmRes_UnexpectedByte) {
+            } else {
+                Lexer_SetErrorInfo(lex, byte);
                 return false;
             }
         }
     }
 
     return true;
+}
+
+static
+void
+Lexer_ResetFsmInfo(
+    Lexer * lex
+) {
+    lex->stat = FsmStat_Idle;
+    FlexBuf_Clear(lex->str);
+    lex->num = 0;
+    TokSeq_Clear(lex->seq);
+}
+
+static
+void
+Lexer_ResetTokenInfo(
+    Lexer * lex
+) {
+    lex->tok.row = 0;
+    lex->tok.col = 0;
+    lex->tok.off = 0;
+    lex->tok.len = 0;
+}
+
+static
+void
+Lexer_ResetErrorInfo(
+    Lexer * lex
+) {
+    lex->err.type = LexErr_Ok;
+    FlexBuf_Clear(lex->err.msg);
+    lex->err.line_no = 0;
+    lex->err.col_no = 0;
 }
 
 bool
@@ -860,8 +1004,10 @@ Lexer_Finalize(
         break;
 
     case FsmRes_Again:
-    case FsmRes_NoMemory:
-    case FsmRes_UnexpectedByte:
+        break;
+
+    case FsmRes_Error:
+        Lexer_SetErrorInfo(lex, 0);
         return false;
     }
 
@@ -884,12 +1030,47 @@ Lexer_Finalize(
     lex->seq = new_seq;
     *seq = res_seq;
 
-    lex->tok.row = 0;
-    lex->tok.col = 0;
-    lex->tok.off = 0;
-    lex->tok.len = 0;
+    Lexer_ResetTokenInfo(lex);
+    Lexer_ResetErrorInfo(lex);
 
     return true;
+}
+
+LexErr
+Lexer_ErrorType(
+    Lexer * lex
+) {
+    return lex->err.type;
+}
+
+FlexBuf *
+Lexer_ErrorMessage(
+    Lexer * lex
+) {
+    return lex->err.msg;
+}
+
+usize
+Lexer_ErrorLineNo(
+    Lexer * lex
+) {
+    return lex->err.line_no;
+}
+
+usize
+Lexer_ErrorColumnNo(
+    Lexer * lex
+) {
+    return lex->err.col_no;
+}
+
+void
+Lexer_Reset(
+    Lexer * lex
+) {
+    Lexer_ResetFsmInfo(lex);
+    Lexer_ResetTokenInfo(lex);
+    Lexer_ResetErrorInfo(lex);
 }
 
 void
@@ -898,5 +1079,6 @@ Lexer_Free(
 ) {
     FlexBuf_Free(lex->str);
     TokSeq_Free(lex->seq);
+    FlexBuf_Free(lex->err.msg);
     MeMem_Free(lex);
 }
