@@ -130,11 +130,14 @@ kw_tok_map[] = {
     (KwTokEnt[]) { { NULL, 0 } },
     (KwTokEnt[]) {
         { "if", TokTag_If },
+        { "or", TokTag_Or },
         { NULL, 0 },
     },
     (KwTokEnt[]) {
+        { "and", TokTag_And },
         { "for", TokTag_For },
         { "let", TokTag_Let },
+        { "not", TokTag_Not },
         { NULL, 0 },
     },
     (KwTokEnt[]) {
@@ -460,6 +463,8 @@ Lexer_FeedByte_Idle(
         case '-': tag = TokTag_Minus; break;
         case '*': tag = TokTag_Asterisk; break;
         case '/': tag = TokTag_ForwardSlash; break;
+        case '%': tag = TokTag_Percent; break;
+        case '^': tag = TokTag_Exponent; break;
         case ';': tag = TokTag_Semicolon; break;
         default: found = false; break;
         }

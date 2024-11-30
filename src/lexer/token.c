@@ -16,6 +16,9 @@ TokTag_ToStr(
     case TokTag_Else: return "else";
     case TokTag_False: return "false";
     case TokTag_True: return "true";
+    case TokTag_Not: return "not";
+    case TokTag_Or: return "or";
+    case TokTag_And: return "and";
     case TokTag_Match: return "match";
     case TokTag_While: return "while";
     case TokTag_For: return "for";
@@ -27,6 +30,8 @@ TokTag_ToStr(
     case TokTag_Minus: return "-";
     case TokTag_Asterisk: return "*";
     case TokTag_ForwardSlash: return "/";
+    case TokTag_Percent: return "%";
+    case TokTag_Exponent: return "^";
     case TokTag_Equ: return "==";
     case TokTag_Neq: return "!=";
     case TokTag_GreaterThan: return ">";
