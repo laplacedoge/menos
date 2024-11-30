@@ -8,6 +8,7 @@
 typedef enum _AstTag {
     AstTag_StrLit,      /* String literal. */
     AstTag_NumLit,      /* Numeric literal. */
+    AstTag_BoolLit,     /* Boolean literal. */
     AstTag_Var,         /* Variable. */
 
     AstTag_LogNotOp,    /* Logical NOT. */
@@ -55,6 +56,11 @@ AstNode_NewStrLit(
 AstNode *
 AstNode_NewNumLit(
     ssize num
+);
+
+AstNode *
+AstNode_NewBoolLit(
+    bool val
 );
 
 AstNode *
@@ -115,6 +121,10 @@ typedef struct _AstNode {
         struct {
             ssize num;
         } num_lit;
+
+        struct {
+            bool val;
+        } bool_lit;
 
         struct {
             FixedBuf * str;

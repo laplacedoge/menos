@@ -8,6 +8,7 @@ AstTag_ToStr(
     switch (tag) {
     case AstTag_StrLit: return "StringLiteral";
     case AstTag_NumLit: return "NumericLiteral";
+    case AstTag_BoolLit: return "BooleanLiteral";
     case AstTag_Var: return "Variable";
 
     case AstTag_LogNotOp: return "LogicalNot";
@@ -103,6 +104,24 @@ AstNode_NewNumLit(
 
     node->tag = AstTag_NumLit;
     node->ext.num_lit.num = num;
+
+    return node;
+
+Exit:
+    return NULL;
+}
+
+AstNode *
+AstNode_NewBoolLit(
+    bool val
+) {
+    AstNode * node = AstNode_New();
+    if (node == NULL) {
+        goto Exit;
+    }
+
+    node->tag = AstTag_BoolLit;
+    node->ext.bool_lit.val = val;
 
     return node;
 
@@ -252,6 +271,15 @@ AstNode_PushAsStr_Recur(
 
         break;
 
+    case AstTag_BoolLit:
+        if (FlexBuf_PushFmt(buf, "<%s %s>",
+            label, node->ext.bool_lit.val ? "true" : "false") == false) {
+
+            return false;
+        }
+
+        break;
+
     case AstTag_Var: {
         const u8 * const str_buf = FixedBuf_Data(node->ext.var.str);
         const usize str_len = FixedBuf_Size(node->ext.var.str);
@@ -281,6 +309,7 @@ AstNode_PushAsStr_Recur(
     switch (node->tag) {
     case AstTag_StrLit:
     case AstTag_NumLit:
+    case AstTag_BoolLit:
 
     case AstTag_Var:
         break;
@@ -375,6 +404,7 @@ AstNode_FreeTree(
         break;
 
     case AstTag_NumLit:
+    case AstTag_BoolLit:
         break;
 
     case AstTag_Var:

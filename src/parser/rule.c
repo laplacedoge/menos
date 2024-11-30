@@ -56,6 +56,19 @@ ParRule_Base(
 
         break;
 
+    case TokTag_False:
+    case TokTag_True:
+        if (base_node = AstNode_NewBoolLit(tok->tag == TokTag_True),
+            base_node == NULL) {
+
+            Parser_SetNoEnoughMemoryError(par);
+            goto Exit;
+        }
+
+        Parser_Consume(par);
+
+        break;
+
     case TokTag_LeftParen:
         Parser_Consume(par);
 
