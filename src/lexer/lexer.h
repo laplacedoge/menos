@@ -15,6 +15,29 @@ LexErr_ToStr(
     LexErr err
 );
 
+typedef struct _LexOut LexOut;
+
+LexOut *
+LexOut_New(
+    FixedBuf * src,
+    TokSeq * seq
+);
+
+FixedBuf *
+LexOut_Source(
+    LexOut * lo
+);
+
+TokSeq *
+LexOut_Tokens(
+    LexOut * lo
+);
+
+void
+LexOut_Free(
+    LexOut * lo
+);
+
 typedef struct _Lexer Lexer;
 
 Lexer *

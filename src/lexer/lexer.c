@@ -17,6 +17,58 @@ LexErr_ToStr(
     }
 }
 
+/* Lexer output structure. */
+typedef struct _LexOut {
+
+    /* String representation of the input source. */
+    FixedBuf * src;
+
+    /* Sequence of tokens. */
+    TokSeq * seq;
+} LexOut;
+
+LexOut *
+LexOut_New(
+    FixedBuf * src,
+    TokSeq * seq
+) {
+    LexOut * lo = (LexOut *)MeMem_Malloc(sizeof(LexOut));
+    if (lo == NULL) {
+        goto Exit;
+    }
+
+    lo->src = src;
+    lo->seq = seq;
+
+    return lo;
+
+Exit:
+    return NULL;
+}
+
+FixedBuf *
+LexOut_Source(
+    LexOut * lo
+) {
+    return lo->src;
+}
+
+TokSeq *
+LexOut_Tokens(
+    LexOut * lo
+) {
+    return lo->seq;
+}
+
+void
+LexOut_Free(
+    LexOut * lo
+) {
+    FixedBuf_Free(lo->src);
+    TokSeq_Free(lo->seq);
+    MeMem_Free(lo);
+}
+
 /* FSM state. */
 typedef enum _FsmStat {
     FsmStat_Idle,
