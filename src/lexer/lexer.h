@@ -61,14 +61,14 @@ Lexer_ScanBuf(
     Lexer * lex,
     const void * buf,
     usize len,
-    TokSeq ** seq
+    LexOut ** lo
 );
 
 bool
 Lexer_ScanFile(
     Lexer * lex,
     const char * path,
-    TokSeq ** seq
+    LexOut ** lo
 );
 
 LexErr

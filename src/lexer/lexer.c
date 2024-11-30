@@ -1108,60 +1108,104 @@ Lexer_Finalize(
     return true;
 }
 
+static
+bool
+Lexer_FeedAndFinalize(
+    Lexer * lex,
+    FixedBuf * src,
+    const void * buf,
+    usize len,
+    LexOut ** lo
+) {
+
+    /* Swap the input source. */
+    FixedBuf * old_src = lex->in.src;
+    lex->in.src = src;
+
+    /* Feed and finalize. */
+    TokSeq * seq = NULL;
+    if (Lexer_Feed(lex, buf, len) == false ||
+        Lexer_Finalize(lex, &seq) == false) {
+
+        goto SwapSrc;
+    }
+
+    /* Generate lexer output. */
+    LexOut * new_lo = LexOut_New(src, seq);
+    if (new_lo == NULL) {
+        goto FreeSeq;
+    }
+
+    /* Swap back the input source. */
+    lex->in.src = old_src;
+
+    *lo = new_lo;
+
+    return true;
+
+FreeSeq:
+    TokSeq_Free(seq);
+
+SwapSrc:
+    lex->in.src = old_src;
+
+    return false;
+}
+
 bool
 Lexer_ScanBuf(
     Lexer * lex,
     const void * buf,
     usize len,
-    TokSeq ** seq
+    LexOut ** lo
 ) {
-    FixedBuf * in_src = FixedBuf_NewFromStr("<buffer>");
-    if (in_src == NULL) {
-        return false;
+    FixedBuf * src = FixedBuf_NewFromStr("<buffer>");
+    if (src == NULL) {
+        goto Exit;
     }
 
-    FixedBuf_Free(lex->in.src);
-    lex->in.src = in_src;
-
-    if (Lexer_Feed(lex, buf, len) == false ||
-        Lexer_Finalize(lex, seq) == false) {
-        return false;
+    if (Lexer_FeedAndFinalize(lex, src, buf, len, lo) == false) {
+        goto FreeSrc;
     }
 
     return true;
+
+FreeSrc:
+    FixedBuf_Free(src);
+
+Exit:
+    return false;
 }
 
 bool
 Lexer_ScanFile(
     Lexer * lex,
     const char * path,
-    TokSeq ** seq
+    LexOut ** lo
 ) {
     FixedBuf * file_data = FixedBuf_NewFromFile(path);
     if (file_data == NULL) {
         goto Exit;
     }
 
-    const u8 * const file_buf = FixedBuf_Data(file_data);
-    const usize file_len = FixedBuf_Size(file_data);
+    const u8 * const buf = FixedBuf_Data(file_data);
+    const usize len = FixedBuf_Size(file_data);
 
-    FixedBuf * in_src = FixedBuf_NewFromStr(path);
-    if (in_src == NULL) {
+    FixedBuf * src = FixedBuf_NewFromStr(path);
+    if (src == NULL) {
         goto FreeFileData;
     }
 
-    FixedBuf_Free(lex->in.src);
-    lex->in.src = in_src;
-
-    if (Lexer_Feed(lex, file_buf, file_len) == false ||
-        Lexer_Finalize(lex, seq) == false) {
-
-        goto FreeFileData;
+    if (Lexer_FeedAndFinalize(lex, src, buf, len, lo) == false) {
+        goto FreeSrc;
     }
 
     FixedBuf_Free(file_data);
 
     return true;
+
+FreeSrc:
+    FixedBuf_Free(src);
 
 FreeFileData:
     FixedBuf_Free(file_data);

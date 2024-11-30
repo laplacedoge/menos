@@ -32,8 +32,11 @@ TEST NameTokens(void) {
     Lexer * lex = Lexer_New();
     ASSERT_NEQ(NULL, lex);
 
-    TokSeq * seq;
-    ASSERT(Lexer_ScanBuf(lex, INPUT_STR, INPUT_LEN, &seq));
+    LexOut * lo;
+    ASSERT(Lexer_ScanBuf(lex, INPUT_STR, INPUT_LEN, &lo));
+
+    TokSeq * seq = LexOut_Tokens(lo);
+    ASSERT_NEQ(NULL, seq);
 
     ASSERT_NEQ(NULL, seq);
     ASSERT_EQ_FMT(NUM_TOKS, TokSeq_Count(seq), "%zu");
@@ -113,7 +116,7 @@ TEST NameTokens(void) {
     ASSERT_EQ_FMT(0UL, Token_Length(tok), "%zu");
     ASSERT_TOK_TAG_EQ(TokTag_Eof, tok->tag);
 
-    TokSeq_Free(seq);
+    LexOut_Free(lo);
 
     Lexer_Free(lex);
 
@@ -128,8 +131,11 @@ TEST ComparisonOperatorTokens(void) {
     Lexer * lex = Lexer_New();
     ASSERT_NEQ(NULL, lex);
 
-    TokSeq * seq;
-    ASSERT(Lexer_ScanBuf(lex, INPUT_STR, INPUT_LEN, &seq));
+    LexOut * lo;
+    ASSERT(Lexer_ScanBuf(lex, INPUT_STR, INPUT_LEN, &lo));
+
+    TokSeq * seq = LexOut_Tokens(lo);
+    ASSERT_NEQ(NULL, seq);
 
     ASSERT_NEQ(NULL, seq);
     ASSERT_EQ_FMT(NUM_TOKS, TokSeq_Count(seq), "%zu");
@@ -195,7 +201,7 @@ TEST ComparisonOperatorTokens(void) {
     ASSERT_EQ_FMT(0UL, Token_Length(tok), "%zu");
     ASSERT_TOK_TAG_EQ(TokTag_Eof, tok->tag);
 
-    TokSeq_Free(seq);
+    LexOut_Free(lo);
 
     Lexer_Free(lex);
 
@@ -210,8 +216,11 @@ TEST AllKindsOfBracketsTokens(void) {
     Lexer * lex = Lexer_New();
     ASSERT_NEQ(NULL, lex);
 
-    TokSeq * seq;
-    ASSERT(Lexer_ScanBuf(lex, INPUT_STR, INPUT_LEN, &seq));
+    LexOut * lo;
+    ASSERT(Lexer_ScanBuf(lex, INPUT_STR, INPUT_LEN, &lo));
+
+    TokSeq * seq = LexOut_Tokens(lo);
+    ASSERT_NEQ(NULL, seq);
 
     ASSERT_NEQ(NULL, seq);
     ASSERT_EQ_FMT(NUM_TOKS, TokSeq_Count(seq), "%zu");
@@ -284,7 +293,7 @@ TEST AllKindsOfBracketsTokens(void) {
     ASSERT_EQ_FMT(0UL, Token_Length(tok), "%zu");
     ASSERT_TOK_TAG_EQ(TokTag_Eof, tok->tag);
 
-    TokSeq_Free(seq);
+    LexOut_Free(lo);
 
     Lexer_Free(lex);
 
@@ -303,8 +312,11 @@ TEST ScanMultiLineInput(void) {
     Lexer * lex = Lexer_New();
     ASSERT_NEQ(NULL, lex);
 
-    TokSeq * seq;
-    ASSERT(Lexer_ScanBuf(lex, INPUT_STR, INPUT_LEN, &seq));
+    LexOut * lo;
+    ASSERT(Lexer_ScanBuf(lex, INPUT_STR, INPUT_LEN, &lo));
+
+    TokSeq * seq = LexOut_Tokens(lo);
+    ASSERT_NEQ(NULL, seq);
 
     ASSERT_NEQ(NULL, seq);
     ASSERT_EQ_FMT(NUM_TOKS, TokSeq_Count(seq), "%zu");
@@ -349,7 +361,7 @@ TEST ScanMultiLineInput(void) {
     ASSERT_EQ_FMT(0UL, Token_Length(tok), "%zu");
     ASSERT_TOK_TAG_EQ(TokTag_Eof, tok->tag);
 
-    TokSeq_Free(seq);
+    LexOut_Free(lo);
 
     Lexer_Free(lex);
 
@@ -363,12 +375,12 @@ TEST LinebreakTerminatedStringLiteral(void) {
     Lexer * lex = Lexer_New();
     ASSERT_NEQ(NULL, lex);
 
-    TokSeq * seq;
+    LexOut * lo;
 
     INPUT_STR = "var = \"Hello\n";
     INPUT_LEN = strlen(INPUT_STR);
 
-    ASSERT_FALSE(Lexer_ScanBuf(lex, INPUT_STR, INPUT_LEN, &seq));
+    ASSERT_FALSE(Lexer_ScanBuf(lex, INPUT_STR, INPUT_LEN, &lo));
     ASSERT_LEX_ERR_EQ(LexErr_UnexpectedByte, Lexer_ErrorType(lex));
     ASSERT_EQ_FMT(1UL, Lexer_ErrorLineNo(lex), "%zu");
     ASSERT_EQ_FMT(13UL, Lexer_ErrorColumnNo(lex), "%zu");
@@ -378,7 +390,7 @@ TEST LinebreakTerminatedStringLiteral(void) {
     INPUT_STR = "var = \"Hello\r\n";
     INPUT_LEN = strlen(INPUT_STR);
 
-    ASSERT_FALSE(Lexer_ScanBuf(lex, INPUT_STR, INPUT_LEN, &seq));
+    ASSERT_FALSE(Lexer_ScanBuf(lex, INPUT_STR, INPUT_LEN, &lo));
     ASSERT_LEX_ERR_EQ(LexErr_UnexpectedByte, Lexer_ErrorType(lex));
     ASSERT_EQ_FMT(1UL, Lexer_ErrorLineNo(lex), "%zu");
     ASSERT_EQ_FMT(13UL, Lexer_ErrorColumnNo(lex), "%zu");
