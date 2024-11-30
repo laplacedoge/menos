@@ -32,6 +32,7 @@ AstTag_ToStr(
     case AstTag_BinExpOp: return "BinaryExponentiation";
 
     case AstTag_AsgnStmt: return "Assignment";
+    case AstTag_BlockStmt: return "Block";
     case AstTag_Prog: return "Program";
     }
 }
@@ -54,7 +55,7 @@ AstNode_NewProg(void) {
     }
 
     node->tag = AstTag_Prog;
-    node->ext.nodes.seq = seq;
+    node->ext.block.seq = seq;
 
     return node;
 
@@ -168,6 +169,25 @@ AstNode_NewBinOp(
     node->tag = tag;
     node->ext.bin_op.lhs = lhs;
     node->ext.bin_op.rhs = rhs;
+
+    return node;
+
+Exit:
+    return NULL;
+}
+
+AstNode *
+AstNode_NewBlock(
+    AstTag tag,
+    AstSeq * seq
+) {
+    AstNode * node = AstNode_New();
+    if (node == NULL) {
+        goto Exit;
+    }
+
+    node->tag = tag;
+    node->ext.block.seq = seq;
 
     return node;
 
@@ -297,9 +317,11 @@ AstNode_PushAsStr_Recur(
         AstNode_PushAsStr_Recur(node->ext.asgn_stmt.rhs, buf, ind, dep);
         break;
 
+    case AstTag_BlockStmt:
+
     case AstTag_Prog: {
-        AstNode ** buf_nodes = AstSeq_Data(node->ext.nodes.seq);
-        usize num_nodes = AstSeq_Count(node->ext.nodes.seq);
+        AstNode ** buf_nodes = AstSeq_Data(node->ext.block.seq);
+        usize num_nodes = AstSeq_Count(node->ext.block.seq);
         for (usize i = 0; i < num_nodes; i++) {
             AstNode_PushAsStr_Recur(buf_nodes[i], buf, ind, dep);
         }
@@ -391,8 +413,10 @@ AstNode_FreeTree(
         AstNode_FreeTree(node->ext.asgn_stmt.rhs);
         break;
 
+    case AstTag_BlockStmt:
+
     case AstTag_Prog:
-        AstSeq_Free(node->ext.nodes.seq);
+        AstSeq_Free(node->ext.block.seq);
         break;
     }
 

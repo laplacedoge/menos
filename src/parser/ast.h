@@ -32,6 +32,7 @@ typedef enum _AstTag {
     AstTag_BinExpOp,    /* Binary exponentiation. */
 
     AstTag_AsgnStmt,
+    AstTag_BlockStmt,
 
     AstTag_Prog,
 } AstTag;
@@ -72,6 +73,12 @@ AstNode_NewBinOp(
     AstTag tag,
     AstNode * lhs,
     AstNode * rhs
+);
+
+AstNode *
+AstNode_NewBlock(
+    AstTag tag,
+    AstSeq * seq
 );
 
 AstNode *
@@ -129,7 +136,7 @@ typedef struct _AstNode {
 
         struct {
             AstSeq * seq;
-        } nodes;
+        } block;
     } ext;
 } AstNode;
 

@@ -566,6 +566,83 @@ static
 AstNode *
 ParRule_Stmt(
     Parser * par
+);
+
+static
+AstSeq *
+ParRule_Block(
+    Parser * par
+) {
+    AstSeq * seq = NULL;
+    AstNode * stmt_node;
+
+    if (seq = AstSeq_New(), seq == NULL) {
+        Parser_SetNoEnoughMemoryError(par);
+        goto Exit;
+    }
+
+    if (Parser_Expect(par, TokTag_LeftBrace) == NULL) {
+        Parser_SetUnexpectedTokenError(par);
+        goto FreeSeq;
+    }
+
+    while (Parser_Check(par, TokTag_RightBrace) == false) {
+        if (stmt_node = ParRule_Stmt(par), Parser_Failed(par)) {
+            goto FreeSeq;
+        }
+
+        if (AstSeq_Push(seq, stmt_node) == false) {
+            Parser_SetNoEnoughMemoryError(par);
+            goto FreeStmtNode;
+        }
+    }
+
+    Parser_Consume(par);
+
+    goto Exit;
+
+FreeStmtNode:
+    AstNode_Free(stmt_node);
+
+FreeSeq:
+    AstSeq_Free(seq);
+
+Exit:
+    return seq;
+}
+
+static
+AstNode *
+ParRule_BlockStmt(
+    Parser * par
+) {
+    AstNode * block_node = NULL;
+    AstSeq * seq;
+
+    if (seq = ParRule_Block(par), Parser_Failed(par)) {
+        goto Exit;
+    }
+
+    if (block_node = AstNode_NewBlock(AstTag_BlockStmt, seq),
+        block_node == NULL) {
+
+        Parser_SetNoEnoughMemoryError(par);
+        goto Exit;
+    }
+
+    goto Exit;
+
+FreeSeq:
+    AstSeq_Free(seq);
+
+Exit:
+    return block_node;
+}
+
+static
+AstNode *
+ParRule_Stmt(
+    Parser * par
 ) {
     AstNode * stmt_node = NULL;
     Token * tok;
@@ -574,6 +651,13 @@ ParRule_Stmt(
     switch (tok->tag) {
     case TokTag_Name:
         if (stmt_node = ParRule_AsgnStmt(par), Parser_Failed(par)) {
+            goto Exit;
+        }
+
+        break;
+
+    case TokTag_LeftBrace:
+        if (stmt_node = ParRule_BlockStmt(par), Parser_Failed(par)) {
             goto Exit;
         }
 
@@ -604,7 +688,7 @@ ParRule_Prog(
         goto Exit;
     }
 
-    seq = prog_node->ext.nodes.seq;
+    seq = prog_node->ext.block.seq;
 
     while (Parser_Check(par, TokTag_Eof) == false) {
         if (stmt_node = ParRule_Stmt(par), Parser_Failed(par)) {
@@ -612,6 +696,7 @@ ParRule_Prog(
         }
 
         if (AstSeq_Push(seq, stmt_node) == false) {
+            Parser_SetNoEnoughMemoryError(par);
             goto FreeStmtNode;
         }
     }
