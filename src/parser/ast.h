@@ -33,6 +33,8 @@ typedef enum _AstTag {
     AstTag_BinExpOp,    /* Binary exponentiation. */
 
     AstTag_AsgnStmt,
+    AstTag_IfStmt,      /* If statement. */
+    AstTag_IfElseStmt,  /* If-else statement. */
     AstTag_BlockStmt,
 
     AstTag_Prog,
@@ -93,6 +95,19 @@ AstNode_NewAsgnStmt(
     AstNode * rhs
 );
 
+AstNode *
+AstNode_NewIfStmt(
+    AstNode * cond,
+    AstNode * then_br
+);
+
+AstNode *
+AstNode_NewIfElseStmt(
+    AstNode * cond,
+    AstNode * then_br,
+    AstNode * else_br
+);
+
 bool
 AstNode_PushAsStr(
     AstNode * node,
@@ -138,6 +153,17 @@ typedef struct _AstNode {
             AstNode * lhs;
             AstNode * rhs;
         } bin_op;
+
+        struct {
+            AstNode * cond;
+            AstNode * then_br;
+        } if_stmt;
+
+        struct {
+            AstNode * cond;     /* Condition. */
+            AstNode * then_br;  /* then-branch. */
+            AstNode * else_br;  /* else-branch. */
+        } if_else_stmt;
 
         struct {
             AstNode * lhs;

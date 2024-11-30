@@ -654,6 +654,67 @@ Exit:
 
 static
 AstNode *
+ParRule_IfOrIfElseStmt(
+    Parser * par
+) {
+    AstNode * stmt_node = NULL;
+    AstNode * cond_node;
+    AstNode * then_br_node;
+    AstNode * else_br_node;
+
+    if (Parser_Expect(par, TokTag_If) == NULL) {
+        Parser_SetUnexpectedTokenError(par);
+        goto Exit;
+    }
+
+    if (cond_node = ParRule_Expr(par), Parser_Failed(par)) {
+        goto Exit;
+    }
+
+    if (then_br_node = ParRule_BlockStmt(par), Parser_Failed(par)) {
+        goto FreeCondNode;
+    }
+
+    if (Parser_Check(par, TokTag_Else)) {
+        Parser_Consume(par);
+
+        if (else_br_node = ParRule_BlockStmt(par), Parser_Failed(par)) {
+            goto FreeThenBrNode;
+        }
+
+        if (stmt_node = AstNode_NewIfElseStmt(
+            cond_node, then_br_node, else_br_node),
+            stmt_node == NULL) {
+
+            Parser_SetNoEnoughMemoryError(par);
+            goto FreeElseBrNode;
+        }
+    } else {
+        if (stmt_node = AstNode_NewIfStmt(cond_node, then_br_node),
+            stmt_node == NULL) {
+
+            Parser_SetNoEnoughMemoryError(par);
+            goto FreeThenBrNode;
+        }
+    }
+
+    goto Exit;
+
+FreeElseBrNode:
+    AstNode_FreeTree(else_br_node);
+
+FreeThenBrNode:
+    AstNode_FreeTree(then_br_node);
+
+FreeCondNode:
+    AstNode_FreeTree(cond_node);
+
+Exit:
+    return stmt_node;
+}
+
+static
+AstNode *
 ParRule_Stmt(
     Parser * par
 ) {
@@ -664,6 +725,13 @@ ParRule_Stmt(
     switch (tok->tag) {
     case TokTag_Name:
         if (stmt_node = ParRule_AsgnStmt(par), Parser_Failed(par)) {
+            goto Exit;
+        }
+
+        break;
+
+    case TokTag_If:
+        if (stmt_node = ParRule_IfOrIfElseStmt(par), Parser_Failed(par)) {
             goto Exit;
         }
 

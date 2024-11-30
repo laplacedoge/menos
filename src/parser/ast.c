@@ -33,7 +33,10 @@ AstTag_ToStr(
     case AstTag_BinExpOp: return "BinaryExponentiation";
 
     case AstTag_AsgnStmt: return "Assignment";
+    case AstTag_IfStmt: return "If";
+    case AstTag_IfElseStmt: return "IfElse";
     case AstTag_BlockStmt: return "Block";
+
     case AstTag_Prog: return "Program";
     }
 }
@@ -234,6 +237,48 @@ Exit:
     return NULL;
 }
 
+AstNode *
+AstNode_NewIfStmt(
+    AstNode * cond,
+    AstNode * then_br
+) {
+    AstNode * node = AstNode_New();
+    if (node == NULL) {
+        goto Exit;
+    }
+
+    node->tag = AstTag_IfStmt;
+    node->ext.if_stmt.cond = cond;
+    node->ext.if_stmt.then_br = then_br;
+
+    return node;
+
+Exit:
+    return NULL;
+}
+
+AstNode *
+AstNode_NewIfElseStmt(
+    AstNode * cond,
+    AstNode * then_br,
+    AstNode * else_br
+) {
+    AstNode * node = AstNode_New();
+    if (node == NULL) {
+        goto Exit;
+    }
+
+    node->tag = AstTag_IfElseStmt;
+    node->ext.if_else_stmt.cond = cond;
+    node->ext.if_else_stmt.then_br = then_br;
+    node->ext.if_else_stmt.else_br = else_br;
+
+    return node;
+
+Exit:
+    return NULL;
+}
+
 bool
 AstNode_PushAsStr_Recur(
     AstNode * node,
@@ -346,6 +391,17 @@ AstNode_PushAsStr_Recur(
         AstNode_PushAsStr_Recur(node->ext.asgn_stmt.rhs, buf, ind, dep);
         break;
 
+    case AstTag_IfStmt:
+        AstNode_PushAsStr_Recur(node->ext.if_stmt.cond, buf, ind, dep);
+        AstNode_PushAsStr_Recur(node->ext.if_stmt.then_br, buf, ind, dep);
+        break;
+
+    case AstTag_IfElseStmt:
+        AstNode_PushAsStr_Recur(node->ext.if_else_stmt.cond, buf, ind, dep);
+        AstNode_PushAsStr_Recur(node->ext.if_else_stmt.then_br, buf, ind, dep);
+        AstNode_PushAsStr_Recur(node->ext.if_else_stmt.else_br, buf, ind, dep);
+        break;
+
     case AstTag_BlockStmt:
 
     case AstTag_Prog: {
@@ -441,6 +497,17 @@ AstNode_FreeTree(
     case AstTag_AsgnStmt:
         AstNode_FreeTree(node->ext.asgn_stmt.lhs);
         AstNode_FreeTree(node->ext.asgn_stmt.rhs);
+        break;
+
+    case AstTag_IfStmt:
+        AstNode_FreeTree(node->ext.if_stmt.cond);
+        AstNode_FreeTree(node->ext.if_stmt.then_br);
+        break;
+
+    case AstTag_IfElseStmt:
+        AstNode_FreeTree(node->ext.if_stmt.cond);
+        AstNode_FreeTree(node->ext.if_else_stmt.then_br);
+        AstNode_FreeTree(node->ext.if_else_stmt.else_br);
         break;
 
     case AstTag_BlockStmt:
