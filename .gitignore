@@ -2,4 +2,5 @@
 .cspell/
 .vscode/
 build/
+sample/
 script/
